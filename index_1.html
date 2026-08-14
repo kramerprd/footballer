@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Draft Command Center</title>
+<style>
+  :root{
+    --qb:#a855f7; --rb:#22c55e; --wr:#3b82f6; --te:#f97316; --dst:#64748b; --k:#eab308;
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --border:#2a2f3a;
+    --text:#eef0f4; --text-dim:#9aa2b1; --accent:#22c55e; --accent2:#3b82f6;
+    --danger:#ef4444; --warn:#f59e0b; --radius:12px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  body{padding-bottom:70px;}
+  #app{max-width:640px;margin:0 auto;padding:0 10px;}
+  header.top{position:sticky;top:0;z-index:20;background:rgba(15,17,21,.97);backdrop-filter:blur(6px);
+    padding:10px 10px 0;border-bottom:1px solid var(--border);}
+  h1{font-size:18px;margin:8px 0 10px;font-weight:700;letter-spacing:.2px;}
+  h1 span{color:var(--accent);}
+  .tabs{display:flex;gap:6px;}
+  .tab{flex:1;text-align:center;padding:10px 4px;border-radius:10px 10px 0 0;
+    background:transparent;color:var(--text-dim);font-weight:600;font-size:13px;
+    border:none;cursor:pointer;}
+  .tab.active{background:var(--panel);color:var(--text);}
+  .view{display:none;padding-top:12px;}
+  .view.active{display:block;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:12px;margin-bottom:10px;}
+  .row{display:flex;align-items:center;gap:8px;}
+  .between{justify-content:space-between;}
+  .wrap{flex-wrap:wrap;}
+  input[type=text],input[type=number],select{
+    background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:9px 10px;font-size:14px;width:100%;}
+  label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;}
+  button{font-family:inherit;cursor:pointer;}
+  .btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;}
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#06210f;}
+  .btn.blue{background:var(--accent2);border-color:var(--accent2);color:#08152b;}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:6px 9px;font-size:12px;}
+  .btn.danger{background:var(--danger);border-color:var(--danger);color:#2b0505;}
+  .pos-badge{display:inline-flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;color:#0b0d10;border-radius:6px;padding:2px 6px;min-width:30px;}
+  .pos-QB{background:var(--qb);color:#fff;} .pos-RB{background:var(--rb);}
+  .pos-WR{background:var(--wr);color:#fff;} .pos-TE{background:var(--te);}
+  .pos-DST{background:var(--dst);color:#fff;} .pos-K{background:var(--k);}
+  .filters{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;}
+  .chip{flex:0 0 auto;padding:6px 12px;border-radius:999px;border:1px solid var(--border);
+    background:var(--panel2);color:var(--text-dim);font-size:12px;font-weight:700;}
+  .chip.active{background:var(--text);color:#0b0d10;border-color:var(--text);}
+  .player-row{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid var(--border);}
+  .player-row:last-child{border-bottom:none;}
+  .rank-num{width:26px;text-align:right;color:var(--text-dim);font-variant-numeric:tabular-nums;font-size:13px;}
+  .handle{width:22px;text-align:center;color:var(--text-dim);font-size:18px;touch-action:none;user-select:none;padding:4px 0;}
+  .p-name{flex:1;min-width:0;}
+  .p-name .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .p-name .tm{font-size:11px;color:var(--text-dim);}
+  .arrows{display:flex;flex-direction:column;gap:2px;}
+  .arrows button{width:24px;height:20px;font-size:10px;padding:0;line-height:1;background:var(--panel2);
+    border:1px solid var(--border);color:var(--text-dim);border-radius:4px;}
+  .drafted .p-name .nm{text-decoration:line-through;color:var(--text-dim);}
+  .mine-tag{font-size:10px;font-weight:800;background:var(--accent);color:#06210f;padding:2px 6px;border-radius:5px;}
+  .other-tag{font-size:10px;font-weight:800;background:var(--panel2);color:var(--text-dim);padding:2px 6px;border-radius:5px;border:1px solid var(--border);}
+  .search-row{margin-bottom:8px;}
+  .banner{background:linear-gradient(90deg,#1f2a1f,#152018);border:1px solid #2f4a2f;border-radius:12px;
+    padding:12px;margin-bottom:10px;text-align:center;}
+  .banner.off{background:var(--panel);border-color:var(--border);}
+  .banner .big{font-size:15px;font-weight:800;color:var(--accent);}
+  .banner.off .big{color:var(--text-dim);}
+  .banner .sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .rec-card{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--panel2);}
+  .rec-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .rec-rank{font-size:11px;color:var(--text-dim);font-weight:700;}
+  .rec-why{font-size:12px;color:var(--text-dim);margin-top:5px;line-height:1.4;}
+  .rec-btns{display:flex;gap:6px;margin-top:8px;}
+  .slotgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}
+  .slot{border:1px dashed var(--border);border-radius:8px;padding:6px;font-size:11px;text-align:center;color:var(--text-dim);}
+  .slot.filled{border-style:solid;border-color:var(--accent);color:var(--text);background:rgba(34,197,94,.08);}
+  .slot .lbl{font-weight:800;font-size:10px;letter-spacing:.3px;color:var(--text-dim);}
+  .slot .val{font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .section-title{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);
+    font-weight:800;margin:2px 0 8px;}
+  details summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--text-dim);padding:4px 0;}
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .settings-grid .full{grid-column:1/-1;}
+  .helptext{font-size:12px;color:var(--text-dim);line-height:1.5;}
+  .hidden{display:none !important;}
+  .dragging{opacity:.5;background:var(--panel2);}
+  footer.note{font-size:11px;color:var(--text-dim);text-align:center;padding:16px 8px 4px;line-height:1.5;}
+  .actionbtns{display:flex;gap:4px;}
+  .actionbtns button{padding:6px 8px;font-size:11px;}
+  .empty{text-align:center;color:var(--text-dim);font-size:13px;padding:20px 8px;}
+  input[type=file]{color:var(--text-dim);font-size:12px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <h1>🏈 Draft <span>Command Center</span></h1>
+    <div class="tabs">
+      <button class="tab active" data-tab="rankings">Rankings</button>
+      <button class="tab" data-tab="draft">Draft Day</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+  </header>
+
+  <div id="app-body">
+
+  <!-- RANKINGS TAB -->
+  <section class="view active" id="view-rankings">
+    <div class="card">
+      <div class="helptext">Drag <b>⠿</b> (or use the arrows) to reorder your personal board. Reordering is disabled while a search or position filter is active — clear them first.</div>
+    </div>
+    <div class="search-row">
+      <input type="text" id="rank-search" placeholder="Search player or team...">
+    </div>
+    <div class="filters" id="rank-filters"></div>
+    <div class="card" id="rank-add-card">
+      <div class="section-title">Add a player</div>
+      <div class="row wrap">
+        <input type="text" id="add-name" placeholder="Player name" style="flex:2;min-width:140px;">
+        <select id="add-pos" style="flex:1;min-width:80px;">
+          <option>QB</option><option selected>RB</option><option>WR</option><option>TE</option><option>DST</option><option>K</option>
+        </select>
+        <input type="text" id="add-team" placeholder="Team" style="flex:1;min-width:70px;">
+        <button class="btn primary small" id="add-player-btn">Add</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;">
+      <div id="rankings-list"></div>
+    </div>
+  </section>
+
+  <!-- DRAFT DAY TAB -->
+  <section class="view" id="view-draft">
+    <div id="turn-banner" class="banner off">
+      <div class="big">Pick 1 · Round 1</div>
+      <div class="sub">Set your draft slot in Settings to track turns</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Your top 3 recommendations</div>
+      <div id="rec-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="row between">
+        <div class="section-title" style="margin:0;">My roster</div>
+        <div style="font-size:12px;color:var(--text-dim);" id="roster-count"></div>
+      </div>
+      <div class="slotgrid" id="roster-grid"></div>
+    </div>
+
+    <div class="card" style="padding:0;">
+      <div style="padding:12px 12px 0;">
+        <input type="text" id="draft-search" placeholder="Search available players...">
+        <div class="filters" id="draft-filters" style="margin-top:8px;"></div>
+      </div>
+      <div id="available-list"></div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary id="drafted-summary">Draft log (0 picks)</summary>
+        <div id="drafted-list" style="margin-top:8px;"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- SETTINGS TAB -->
+  <section class="view" id="view-settings">
+    <div class="card">
+      <div class="section-title">League setup</div>
+      <div class="settings-grid">
+        <div><label>Teams</label><input type="number" id="s-teams" min="4" max="20"></div>
+        <div><label>Your slot</label><input type="number" id="s-slot" min="1" max="20"></div>
+        <div><label>Bench spots</label><input type="number" id="s-bench" min="0" max="15"></div>
+        <div><label>QB</label><input type="number" id="s-qb" min="0" max="4"></div>
+        <div><label>RB</label><input type="number" id="s-rb" min="0" max="6"></div>
+        <div><label>WR</label><input type="number" id="s-wr" min="0" max="6"></div>
+        <div><label>TE</label><input type="number" id="s-te" min="0" max="4"></div>
+        <div><label>FLEX</label><input type="number" id="s-flex" min="0" max="6"></div>
+        <div><label>DST</label><input type="number" id="s-dst" min="0" max="3"></div>
+        <div><label>K</label><input type="number" id="s-k" min="0" max="3"></div>
+        <div class="full"><label>Scoring format (label only)</label><input type="text" id="s-scoring"></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn primary" id="save-settings">Save settings</button>
+      </div>
+      <div class="helptext" style="margin-top:8px;">FLEX slots are filled by leftover RB/WR/TE. This drives the position-need scoring behind your recommendations.</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Backup / restore</div>
+      <div class="helptext">Changes autosave in this browser on this device, so refreshing or reopening the page keeps your rankings and picks. That save doesn't cross devices or browsers on its own — either use Cross-device sync below (recommended), or Export here before switching to your laptop and Import there.</div>
+      <div class="row wrap" style="margin-top:10px;">
+        <button class="btn blue" id="export-btn">Export progress (.json)</button>
+        <label class="btn ghost" style="border:1px solid var(--border);">
+          Import file
+          <input type="file" id="import-file" accept="application/json" style="display:none;">
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Cross-device sync (GitHub)</div>
+      <div class="helptext">Uses your own GitHub repo as the sync point. Once connected, opening the page (or switching back to this tab) automatically pulls the latest from GitHub, and every change pushes back — your phone and laptop stay in sync without manual export/import. Your token is stored only in this browser and used solely to talk to GitHub directly.</div>
+      <div class="settings-grid" style="margin-top:10px;grid-template-columns:1fr 1fr;">
+        <div><label>GitHub username</label><input type="text" id="sync-owner" placeholder="kramerprd"></div>
+        <div><label>Repo name</label><input type="text" id="sync-repo" placeholder="footballer"></div>
+      </div>
+      <div style="margin-top:8px;"><label>Access token</label><input type="password" id="sync-token" placeholder="github_pat_..."></div>
+      <div class="row wrap" style="margin-top:10px;">
+        <button class="btn primary" id="sync-connect-btn">Connect &amp; sync</button>
+        <button class="btn ghost" id="sync-now-btn" style="border:1px solid var(--border);">Sync now</button>
+        <button class="btn ghost" id="sync-disconnect-btn" style="border:1px solid var(--danger);color:var(--danger);">Disconnect</button>
+      </div>
+      <div id="sync-status" class="helptext" style="margin-top:8px;">Not connected.</div>
+      <details style="margin-top:10px;">
+        <summary>How to create the token (one-time, ~1 minute)</summary>
+        <div class="helptext" style="margin-top:6px;line-height:1.6;">
+          1. On github.com, tap your profile photo (top right) → Settings.<br>
+          2. Scroll to the bottom of the left sidebar → Developer settings.<br>
+          3. Personal access tokens → Fine-grained tokens → Generate new token.<br>
+          4. Under Repository access, choose "Only select repositories" and pick this repo.<br>
+          5. Under Permissions → Repository permissions, find "Contents" and set it to Read and write.<br>
+          6. Tap Generate token, then copy the token shown (starts with <code>github_pat_</code>) — GitHub only shows it once.<br>
+          7. Paste it into the Access token field above and tap Connect &amp; sync.
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Reset</div>
+      <div class="row wrap">
+        <button class="btn ghost ghost-danger" id="reset-draft-btn" style="border:1px solid var(--warn);color:var(--warn);">Reset draft picks only</button>
+        <button class="btn ghost" id="reset-all-btn" style="border:1px solid var(--danger);color:var(--danger);">Reset everything</button>
+      </div>
+    </div>
+
+    <footer class="note">
+      Seed rankings: half-PPR consensus ADP (community-sourced, updated 8/12/2026), plus kicker ADP. Andy Holloway's individual FantasyPros board wasn't published yet as of build time, so this consensus list stands in as your starting order — re-rank freely to match his rankings or your own read. Double-check player/team info against your league platform before draft day.
+    </footer>
+  </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+// Seed data: 2026 half-PPR consensus ADP-based rankings (FantasyFootballCalculator,
+// last updated 8/12/2026) + kicker rankings. Fully editable in-app.
+const SEED_PLAYERS = [
+["Jahmyr Gibbs","RB","DET"],["Bijan Robinson","RB","ATL"],["Puka Nacua","WR","LAR"],
+["Ja'Marr Chase","WR","CIN"],["Jaxon Smith-Njigba","WR","SEA"],["Jonathan Taylor","RB","IND"],
+["Christian McCaffrey","RB","SF"],["Amon-Ra St. Brown","WR","DET"],["James Cook III","RB","BUF"],
+["Derrick Henry","RB","BAL"],["Drake London","WR","ATL"],["De'Von Achane","RB","MIA"],
+["CeeDee Lamb","WR","DAL"],["Justin Jefferson","WR","MIN"],["Rashee Rice","WR","KC"],
+["Chase Brown","RB","CIN"],["Ashton Jeanty","RB","LV"],["A.J. Brown","WR","NE"],
+["George Pickens","WR","DAL"],["Nico Collins","WR","HOU"],["Saquon Barkley","RB","PHI"],
+["Zay Flowers","WR","BAL"],["Chris Olave","WR","NO"],["Omarion Hampton","RB","LAC"],
+["Kenneth Walker III","RB","SEA"],["Josh Jacobs","RB","GB"],["Malik Nabers","WR","NYG"],
+["Breece Hall","RB","NYJ"],["Kyren Williams","RB","LAR"],["Garrett Wilson","WR","NYJ"],
+["DeVonta Smith","WR","PHI"],["Jeremiyah Love","RB","ARI"],["Tee Higgins","WR","CIN"],
+["Tetairoa McMillan","WR","CAR"],["Emeka Egbuka","WR","TB"],["Davante Adams","WR","LAR"],
+["Josh Allen","QB","BUF"],["Jameson Williams","WR","DET"],["Cam Skattebo","RB","NYG"],
+["Javonte Williams","RB","DAL"],["Ladd McConkey","WR","LAC"],["Terry McLaurin","WR","WAS"],
+["Rome Odunze","WR","CHI"],["Jaylen Waddle","WR","DEN"],["Trey McBride","TE","ARI"],
+["Mike Evans","WR","SF"],["Travis Etienne Jr.","RB","NO"],["DJ Moore","WR","BUF"],
+["Alec Pierce","WR","IND"],["D'Andre Swift","RB","CHI"],["Christian Watson","WR","GB"],
+["Bucky Irving","RB","TB"],["Brock Bowers","TE","LV"],["Courtland Sutton","WR","DEN"],
+["Luther Burden III","WR","CHI"],["DK Metcalf","WR","PIT"],["Marvin Harrison Jr.","WR","ARI"],
+["Parker Washington","WR","JAX"],["Quinshon Judkins","RB","CLE"],["Bhayshul Tuten","RB","JAX"],
+["Drake Maye","QB","NE"],["Brian Thomas Jr.","WR","JAX"],["David Montgomery","RB","HOU"],
+["Carnell Tate","WR","TEN"],["TreVeyon Henderson","RB","NE"],["Michael Wilson","WR","ARI"],
+["Joe Burrow","QB","CIN"],["Lamar Jackson","QB","BAL"],["Chris Godwin Jr.","WR","TB"],
+["Jaylen Warren","RB","PIT"],["Michael Pittman Jr.","WR","PIT"],["Seattle","DST","SEA"],
+["Quentin Johnston","WR","LAC"],["Tony Pollard","RB","TEN"],["Jakobi Meyers","WR","JAX"],
+["Jayden Reed","WR","GB"],["Josh Downs","WR","IND"],["Jordan Addison","WR","MIN"],
+["Rhamondre Stevenson","RB","NE"],["Wan'Dale Robinson","WR","TEN"],["Chuba Hubbard","RB","CAR"],
+["Colston Loveland","TE","CHI"],["Jordyn Tyson","WR","NO"],["Denver","DST","DEN"],
+["Dak Prescott","QB","DAL"],["Stefon Diggs","WR","WAS"],["Rico Dowdle","RB","PIT"],
+["Xavier Worthy","WR","KC"],["Khalil Shakir","WR","BUF"],["Jayden Daniels","QB","WAS"],
+["Romeo Doubs","WR","NE"],["Matthew Stafford","QB","LAR"],["Jalen Hurts","QB","PHI"],
+["Makai Lemon","WR","PHI"],["Brock Purdy","QB","SF"],["Deebo Samuel Sr.","WR","SF"],
+["Tyler Warren","TE","IND"],["Houston","DST","HOU"],["Caleb Williams","QB","CHI"],
+["Matthew Golden","WR","GB"],["Jadarian Price","RB","SEA"],["RJ Harvey","RB","DEN"],
+["Jalen Coker","WR","CAR"],["Trevor Lawrence","QB","JAX"],["Patrick Mahomes","QB","KC"],
+["Jared Goff","QB","DET"],["Jayden Higgins","WR","HOU"],["Rashid Shaheed","WR","SEA"],
+["Harold Fannin Jr.","TE","CLE"],["J.K. Dobbins","RB","DEN"],["Kyle Pitts Sr.","TE","ATL"],
+["LA Rams","DST","LAR"],["Justin Herbert","QB","LAC"],["KC Concepcion","WR","CLE"],
+["Minnesota","DST","MIN"],["Sam LaPorta","TE","DET"],["Bo Nix","QB","DEN"],
+["Tucker Kraft","TE","GB"],["Jaxson Dart","QB","NYG"],["New England","DST","NE"],
+["Philadelphia","DST","PHI"],["Detroit","DST","DET"],["Aaron Jones Sr.","RB","MIN"],
+["Tre Tucker","WR","LV"],["Jerry Jeudy","WR","CLE"],["Dallas Goedert","TE","PHI"],
+["Kenny Gainwell","RB","TB"],["Jalen McMillan","WR","TB"],["Pittsburgh","DST","PIT"],
+["Travis Kelce","TE","KC"],
+["Brandon Aubrey","K","DAL"],["Jason Myers","K","SEA"],["Ka'imi Fairbairn","K","HOU"],
+["Cameron Dicker","K","LAC"],["Jake Bates","K","DET"],["Harrison Mevis","K","LAR"],
+["Chase McLaughlin","K","TB"],["Tyler Loop","K","BAL"],["Will Reichard","K","MIN"],
+["Cam Little","K","JAX"],["Wil Lutz","K","DEN"],["Harrison Butker","K","KC"],
+["Blake Grupe","K","IND"],["Cairo Santos","K","CHI"],["Eddy Piñeiro","K","SF"],
+["Evan McPherson","K","CIN"],["Nick Folk","K","ATL"],["Andy Borregales","K","NE"],
+["Jake Elliott","K","PHI"],["Tyler Bass","K","BUF"]
+];
+
+
+const DEFAULT_SETTINGS = {
+  teams: 12, slot: 1, bench: 7,
+  QB:1, RB:2, WR:2, TE:1, FLEX:2, DST:1, K:1,
+  scoring: "Half-PPR"
+};
+const FLEX_ELIGIBLE = ["RB","WR","TE"];
+const POSITIONS = ["QB","RB","WR","TE","DST","K"];
+
+let state = {
+  players: [], // {id, rank, name, pos, team, status: 'available'|'mine'|'other'}
+  settings: {...DEFAULT_SETTINGS},
+  history: [] // {id, prevStatus}
+};
+
+function freshPlayers(){
+  return SEED_PLAYERS.map((p,i)=>({
+    id: 'p'+i, rank: i+1, name: p[0], pos: p[1], team: p[2], status: 'available'
+  }));
+}
+
+// ---------- autosave (localStorage) ----------
+const STORAGE_KEY = 'draftCommandCenter_v1';
+let suppressNextSync = false;
+function persistState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){ /* storage unavailable or full — export/import still works */ }
+  if(suppressNextSync){ suppressNextSync = false; return; }
+  scheduleSyncPush();
+}
+function loadPersistedState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(parsed && Array.isArray(parsed.players) && parsed.settings) return parsed;
+    return null;
+  }catch(e){ return null; }
+}
+
+// ---------- cross-device sync (GitHub repo as backend) ----------
+const SYNC_KEY = 'draftCommandCenter_sync_v1';
+let syncConfig = null; // {owner, repo, token, sha}
+let syncTimer = null;
+let syncStatus = {state:'idle', message:'Not connected.'};
+
+function loadSyncConfig(){
+  try{
+    const raw = localStorage.getItem(SYNC_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveSyncConfig(cfg){
+  syncConfig = cfg;
+  try{ localStorage.setItem(SYNC_KEY, JSON.stringify(cfg)); }catch(e){}
+}
+function clearSyncConfig(){
+  syncConfig = null;
+  try{ localStorage.removeItem(SYNC_KEY); }catch(e){}
+}
+function b64EncodeUnicode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64DecodeUnicode(str){ return decodeURIComponent(escape(atob(str))); }
+
+async function githubRequest(path, options){
+  options = options || {};
+  const url = `https://api.github.com/repos/${syncConfig.owner}/${syncConfig.repo}/contents/${path}`;
+  const headers = Object.assign({
+    'Accept':'application/vnd.github+json',
+    'Authorization':'Bearer ' + syncConfig.token,
+    'X-GitHub-Api-Version':'2022-11-28'
+  }, options.headers||{});
+  return fetch(url, Object.assign({}, options, {headers}));
+}
+
+async function syncPull(){
+  if(!syncConfig) return {ok:false, reason:'not-configured'};
+  try{
+    const resp = await githubRequest('state.json');
+    if(resp.status === 404) return {ok:true, remoteExists:false};
+    if(!resp.ok) return {ok:false, reason:'http-'+resp.status};
+    const data = await resp.json();
+    syncConfig.sha = data.sha;
+    saveSyncConfig(syncConfig);
+    const jsonStr = b64DecodeUnicode(String(data.content).replace(/\n/g,''));
+    return {ok:true, remoteExists:true, remoteState: JSON.parse(jsonStr)};
+  }catch(e){
+    return {ok:false, reason:'network'};
+  }
+}
+
+async function syncPush(){
+  if(!syncConfig) return {ok:false, reason:'not-configured'};
+  try{
+    const body = {
+      message: 'Sync draft state',
+      content: b64EncodeUnicode(JSON.stringify(state))
+    };
+    if(syncConfig.sha) body.sha = syncConfig.sha;
+    let resp = await githubRequest('state.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    if(!resp.ok && (resp.status===409 || resp.status===422)){
+      const pull = await syncPull();
+      if(pull.ok){
+        const retryBody = Object.assign({}, body, {sha: syncConfig.sha});
+        resp = await githubRequest('state.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(retryBody)});
+      }
+    }
+    if(!resp.ok) return {ok:false, reason:'http-'+resp.status};
+    const data = await resp.json();
+    syncConfig.sha = data.content.sha;
+    saveSyncConfig(syncConfig);
+    return {ok:true};
+  }catch(e){
+    return {ok:false, reason:'network'};
+  }
+}
+
+function describeSyncError(result){
+  if(!result) return 'Sync error.';
+  if(result.reason==='http-401') return 'GitHub rejected the token — check it was copied correctly and has Contents: Read and write permission.';
+  if(result.reason==='http-404') return 'Repo not found — double check the username and repo name.';
+  if(result.reason==='http-403') return 'Forbidden — token may lack permission, or a rate limit was hit.';
+  if(result.reason==='http-409' || result.reason==='http-422') return 'Sync conflict — tap Sync now to retry.';
+  if(result.reason==='network') return 'Network error — check your connection and try again.';
+  return 'Sync error (' + result.reason + ').';
+}
+
+function setSyncStatus(kind, message){
+  syncStatus = {state:kind, message};
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  el.textContent = message + (kind==='ok' ? ' · ' + new Date().toLocaleTimeString() : '');
+  el.style.color = kind==='error' ? 'var(--danger)' : (kind==='ok' ? 'var(--accent)' : 'var(--text-dim)');
+}
+
+function scheduleSyncPush(){
+  if(!syncConfig) return;
+  if(syncTimer) clearTimeout(syncTimer);
+  setSyncStatus('syncing','Syncing…');
+  syncTimer = setTimeout(async ()=>{
+    const res = await syncPush();
+    if(res.ok) setSyncStatus('ok','Synced'); else setSyncStatus('error', describeSyncError(res));
+  }, 1500);
+}
+
+async function trySyncOnLoad(){
+  syncConfig = loadSyncConfig();
+  if(!syncConfig) return;
+  setSyncStatus('syncing','Checking for updates…');
+  const pull = await syncPull();
+  if(pull.ok && pull.remoteExists){
+    suppressNextSync = true;
+    state = pull.remoteState;
+    if(!state.history) state.history = [];
+    renderAll();
+    setSyncStatus('ok','Synced');
+  } else if(pull.ok && !pull.remoteExists){
+    setSyncStatus('idle','Connected — no synced data yet.');
+  } else {
+    setSyncStatus('error', describeSyncError(pull));
+  }
+}
+
+async function handleConnectSync(){
+  const owner = document.getElementById('sync-owner').value.trim();
+  const repo = document.getElementById('sync-repo').value.trim();
+  const tokenInput = document.getElementById('sync-token').value.trim();
+  const existing = loadSyncConfig();
+  const token = tokenInput || (existing ? existing.token : '');
+  if(!owner || !repo || !token){ alert('Fill in username, repo, and token.'); return; }
+  saveSyncConfig({owner, repo, token, sha: null});
+  setSyncStatus('syncing','Connecting…');
+  const pull = await syncPull();
+  if(!pull.ok){ setSyncStatus('error', describeSyncError(pull)); return; }
+  if(pull.remoteExists){
+    const useRemote = confirm("Found existing synced data on GitHub. Tap OK to load it onto this device (replacing what's here now), or Cancel to keep this device's data and overwrite the synced copy.");
+    if(useRemote){
+      suppressNextSync = true;
+      state = pull.remoteState;
+      if(!state.history) state.history = [];
+      renderAll();
+      setSyncStatus('ok','Connected — loaded synced data.');
+      return;
+    }
+  }
+  const push = await syncPush();
+  setSyncStatus(push.ok ? 'ok' : 'error', push.ok ? 'Connected — synced.' : describeSyncError(push));
+}
+
+async function handleSyncNow(){
+  if(!syncConfig){ alert('Connect sync first.'); return; }
+  setSyncStatus('syncing','Syncing…');
+  const pull = await syncPull();
+  if(pull.ok && pull.remoteExists){
+    suppressNextSync = true;
+    state = pull.remoteState;
+    if(!state.history) state.history = [];
+    renderAll();
+  }
+  const push = await syncPush();
+  setSyncStatus(push.ok ? 'ok' : 'error', push.ok ? 'Synced' : describeSyncError(push));
+}
+
+function handleDisconnectSync(){
+  if(confirm('Disconnect sync? Your data stays on this device either way.')){
+    clearSyncConfig();
+    setSyncStatus('idle','Not connected.');
+  }
+}
+
+function init(){
+  const saved = loadPersistedState();
+  if(saved){
+    state = saved;
+    if(!state.history) state.history = [];
+  } else {
+    state.players = freshPlayers();
+  }
+  renderAll();
+  trySyncOnLoad();
+}
+
+// ---------- helpers ----------
+function byRank(a,b){ return a.rank - b.rank; }
+function available(){ return state.players.filter(p=>p.status==='available').sort(byRank); }
+function mine(){ return state.players.filter(p=>p.status==='mine').sort(byRank); }
+function others(){ return state.players.filter(p=>p.status==='other').sort(byRank); }
+function drafted(){ return state.players.filter(p=>p.status!=='available').sort(byRank); }
+
+function posBadge(pos){ return '<span class="pos-badge pos-'+pos+'">'+pos+'</span>'; }
+
+// ---------- roster need calculation ----------
+function computeNeeds(){
+  const s = state.settings;
+  const my = mine();
+  const counts = {QB:0,RB:0,WR:0,TE:0,DST:0,K:0};
+  my.forEach(p=>{ if(counts[p.pos]!==undefined) counts[p.pos]++; });
+
+  const remainingDirect = {};
+  const leftover = {};
+  POSITIONS.forEach(pos=>{
+    const cap = s[pos] || 0;
+    const used = Math.min(counts[pos], cap);
+    remainingDirect[pos] = cap - used;
+    leftover[pos] = counts[pos] - used;
+  });
+  const flexPool = FLEX_ELIGIBLE.reduce((sum,pos)=> sum + Math.max(0,leftover[pos]||0), 0);
+  const usedFlex = Math.min(flexPool, s.FLEX || 0);
+  const remainingFlex = (s.FLEX||0) - usedFlex;
+
+  const starterTotal = POSITIONS.reduce((sum,pos)=> sum + (s[pos]||0), 0) + (s.FLEX||0);
+  const benchUsed = Math.max(0, my.length - starterTotal);
+  const benchRemaining = Math.max(0, (s.bench||0) - benchUsed);
+
+  const openStarterSlots = POSITIONS.reduce((sum,pos)=> sum + Math.max(0,remainingDirect[pos]), 0) + Math.max(0,remainingFlex);
+  const totalOpen = openStarterSlots + benchRemaining;
+
+  return { remainingDirect, remainingFlex, benchRemaining, totalOpen, openStarterSlots, myCount: my.length };
+}
+
+function buildRosterSlotList(){
+  const s = state.settings;
+  const my = mine();
+  const counts = {QB:[],RB:[],WR:[],TE:[],DST:[],K:[]};
+  my.forEach(p=>{ if(counts[p.pos]) counts[p.pos].push(p); });
+  const slots = [];
+  POSITIONS.forEach(pos=>{
+    const cap = s[pos]||0;
+    for(let i=0;i<cap;i++){
+      slots.push({label:pos, player: counts[pos][i] || null});
+    }
+  });
+  // leftover for flex
+  const leftoverFlexPlayers = [];
+  FLEX_ELIGIBLE.forEach(pos=>{
+    const cap = s[pos]||0;
+    const extra = counts[pos].slice(cap);
+    leftoverFlexPlayers.push(...extra);
+  });
+  leftoverFlexPlayers.sort(byRank);
+  const flexCap = s.FLEX||0;
+  for(let i=0;i<flexCap;i++){
+    slots.push({label:'FLEX', player: leftoverFlexPlayers[i] || null});
+  }
+  return slots;
+}
+
+// ---------- recommendations ----------
+function computeRecommendations(){
+  const avail = available();
+  if(avail.length===0) return [];
+  const needs = computeNeeds();
+  const s = state.settings;
+
+  const scored = avail.map(p=>{
+    const directOpen = (needs.remainingDirect[p.pos]||0) > 0;
+    const flexOpen = FLEX_ELIGIBLE.includes(p.pos) && needs.remainingFlex > 0;
+    const isStarterNeed = directOpen || flexOpen;
+
+    const rankScore = 1000 - p.rank;
+    const needBonus = isStarterNeed ? 150 : 0;
+
+    const nearbyCount = avail.filter(o => o.pos===p.pos && o.rank <= p.rank + 24).length;
+    const scarcityBonus = isStarterNeed ? Math.max(0, 8 - nearbyCount) * 12 : 0;
+
+    let kdstPenalty = 0;
+    if((p.pos==='K' || p.pos==='DST') && needs.totalOpen > 3){
+      kdstPenalty = -1000;
+    }
+
+    const score = rankScore + needBonus + scarcityBonus + kdstPenalty;
+    return {p, score, isStarterNeed, nearbyCount, directOpen, flexOpen};
+  });
+
+  scored.sort((a,b)=> b.score - a.score);
+  const top3 = scored.slice(0,3);
+
+  return top3.map((entry,idx)=>{
+    const p = entry.p;
+    let why;
+    if(entry.isStarterNeed && entry.nearbyCount <= 4){
+      why = `Fills your open ${entry.directOpen ? p.pos : 'FLEX'} need, and the position is thinning — only ${entry.nearbyCount} ${p.pos}s left within your next couple rounds.`;
+    } else if(entry.isStarterNeed){
+      why = `Fills your open ${entry.directOpen ? p.pos : 'FLEX'} slot at strong value (currently ranked #${p.rank} overall on your board).`;
+    } else if(idx===0){
+      why = `Best player available by your rankings — no urgent starter need right now, so take the top talent.`;
+    } else {
+      why = `Strong value at your current rank; good bench/depth stash even without an immediate starting need.`;
+    }
+    return {player:p, why, rank: idx+1};
+  });
+}
+
+// ---------- turn tracking ----------
+function computeTurn(){
+  const s = state.settings;
+  const totalPicks = mine().length + others().length;
+  const pickNum = totalPicks + 1;
+  const round = Math.ceil(pickNum / s.teams);
+  const posInRound = ((pickNum - 1) % s.teams) + 1;
+  const slotOnClock = (round % 2 === 1) ? posInRound : (s.teams - posInRound + 1);
+  const isMyTurn = slotOnClock === s.slot;
+  const picksUntilMe = (()=>{
+    // simulate forward to find next pick where slotOnClock === s.slot
+    let n = pickNum;
+    for(let i=0;i<s.teams*2;i++){
+      const r = Math.ceil(n / s.teams);
+      const pir = ((n - 1) % s.teams) + 1;
+      const slot = (r % 2 === 1) ? pir : (s.teams - pir + 1);
+      if(slot === s.slot) return n - pickNum;
+      n++;
+    }
+    return null;
+  })();
+  return {pickNum, round, isMyTurn, picksUntilMe};
+}
+
+// ---------- rendering ----------
+let activeFilter = 'ALL';
+let draftFilter = 'ALL';
+
+function renderAll(){
+  renderRankingsFilters();
+  renderRankingsList();
+  renderDraftFilters();
+  renderDraftTab();
+  renderSettingsForm();
+}
+
+function renderRankingsFilters(){
+  const el = document.getElementById('rank-filters');
+  const opts = ['ALL',...POSITIONS];
+  el.innerHTML = opts.map(o=>`<button class="chip ${o===activeFilter?'active':''}" data-pos="${o}">${o}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ activeFilter = btn.dataset.pos; renderRankingsFilters(); renderRankingsList(); });
+  });
+}
+
+function renderDraftFilters(){
+  const el = document.getElementById('draft-filters');
+  const opts = ['ALL',...POSITIONS];
+  el.innerHTML = opts.map(o=>`<button class="chip ${o===draftFilter?'active':''}" data-pos="${o}">${o}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ draftFilter = btn.dataset.pos; renderDraftFilters(); renderDraftTab(); });
+  });
+}
+
+function getRankingsFiltered(){
+  const q = document.getElementById('rank-search').value.trim().toLowerCase();
+  let list = [...state.players].sort(byRank);
+  if(activeFilter!=='ALL') list = list.filter(p=>p.pos===activeFilter);
+  if(q) list = list.filter(p=> p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q));
+  return list;
+}
+
+function reorderingAllowed(){
+  const q = document.getElementById('rank-search').value.trim();
+  return activeFilter==='ALL' && !q;
+}
+
+function renderRankingsList(){
+  const list = getRankingsFiltered();
+  const container = document.getElementById('rankings-list');
+  const allowDrag = reorderingAllowed();
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">No players match.</div>';
+    return;
+  }
+  container.innerHTML = list.map((p)=>{
+    const statusTag = p.status==='mine' ? '<span class="mine-tag">MINE</span>' :
+                       p.status==='other' ? '<span class="other-tag">TAKEN</span>' : '';
+    return `<div class="player-row ${p.status!=='available'?'drafted':''}" data-id="${p.id}">
+      <span class="rank-num">${p.rank}</span>
+      ${allowDrag ? '<span class="handle" data-drag="'+p.id+'">⠷⠷</span>' : ''}
+      <span class="p-name">
+        <span class="nm">${escapeHtml(p.name)} ${statusTag}</span>
+        <span class="tm">${posBadge(p.pos)} ${p.team}</span>
+      </span>
+      <div class="arrows">
+        <button data-move="up" data-id="${p.id}" ${!allowDrag?'disabled':''}>▲</button>
+        <button data-move="down" data-id="${p.id}" ${!allowDrag?'disabled':''}>▼</button>
+      </div>
+      <button class="btn small danger-outline" data-del="${p.id}" title="Remove" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);">✕</button>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('[data-move]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      moveRank(btn.dataset.id, btn.dataset.move);
+    });
+  });
+  container.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(confirm('Remove this player from your board entirely?')){
+        state.players = state.players.filter(p=>p.id!==btn.dataset.del);
+        renumberRanks();
+        renderAll();
+      }
+    });
+  });
+  if(allowDrag){
+    container.querySelectorAll('[data-drag]').forEach(handle=>{
+      setupDrag(handle, container);
+    });
+  }
+}
+
+function moveRank(id, dir){
+  const list = [...state.players].sort(byRank);
+  const idx = list.findIndex(p=>p.id===id);
+  if(idx<0) return;
+  const swapWith = dir==='up' ? idx-1 : idx+1;
+  if(swapWith<0 || swapWith>=list.length) return;
+  const tmp = list[idx].rank;
+  list[idx].rank = list[swapWith].rank;
+  list[swapWith].rank = tmp;
+  renderAll();
+}
+
+function renumberRanks(){
+  const list = [...state.players].sort(byRank);
+  list.forEach((p,i)=> p.rank = i+1);
+}
+
+function setupDrag(handle, container){
+  let draggedId = handle.dataset.drag;
+  let draggedEl = handle.closest('.player-row');
+  let pointerId = null;
+
+  handle.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    pointerId = e.pointerId;
+    handle.setPointerCapture(pointerId);
+    draggedEl.classList.add('dragging');
+
+    function onMove(ev){
+      const y = ev.clientY;
+      const rows = [...container.querySelectorAll('.player-row')];
+      for(const row of rows){
+        if(row === draggedEl) continue;
+        const rect = row.getBoundingClientRect();
+        const mid = rect.top + rect.height/2;
+        if(y < mid){
+          container.insertBefore(draggedEl, row);
+          return;
+        }
+      }
+      container.appendChild(draggedEl);
+    }
+    function onUp(ev){
+      handle.releasePointerCapture(pointerId);
+      draggedEl.classList.remove('dragging');
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      // finalize order from DOM
+      const orderedIds = [...container.querySelectorAll('.player-row')].map(r=>r.dataset.id);
+      orderedIds.forEach((id,i)=>{
+        const p = state.players.find(pp=>pp.id===id);
+        if(p) p.rank = i+1;
+      });
+      renderAll();
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ---------- draft tab ----------
+function renderDraftTab(){
+  renderTurnBanner();
+  renderRecommendations();
+  renderRosterGrid();
+  renderAvailableList();
+  renderDraftedLog();
+  persistState();
+}
+
+function renderTurnBanner(){
+  const el = document.getElementById('turn-banner');
+  const t = computeTurn();
+  el.classList.toggle('off', !t.isMyTurn);
+  const sub = t.isMyTurn ? "It's your pick — check the recommendations below." :
+    (t.picksUntilMe!=null ? `${t.picksUntilMe} pick${t.picksUntilMe===1?'':'s'} until your turn.` : '');
+  el.innerHTML = `<div class="big">${t.isMyTurn ? "🟢 YOUR TURN" : "Pick "+t.pickNum} · Round ${t.round}</div>
+    <div class="sub">${sub}</div>`;
+}
+
+function renderRecommendations(){
+  const el = document.getElementById('rec-list');
+  const recs = computeRecommendations();
+  if(recs.length===0){
+    el.innerHTML = '<div class="empty">No available players left on your board — add more in the Rankings tab.</div>';
+    return;
+  }
+  el.innerHTML = recs.map(r=>{
+    const p = r.player;
+    return `<div class="rec-card">
+      <div class="rec-top">
+        <div><span class="rec-rank">#${r.rank} PICK</span><br>
+          <b>${escapeHtml(p.name)}</b> ${posBadge(p.pos)} <span style="color:var(--text-dim);font-size:12px;">${p.team} · board rank ${p.rank}</span>
+        </div>
+      </div>
+      <div class="rec-why">${r.why}</div>
+      <div class="rec-btns">
+        <button class="btn primary small" data-mine="${p.id}">Draft to my team</button>
+        <button class="btn ghost small" data-other="${p.id}" style="border:1px solid var(--border);">Someone else took it</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('[data-mine]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.mine,'mine')));
+  el.querySelectorAll('[data-other]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.other,'other')));
+}
+
+function renderRosterGrid(){
+  const grid = document.getElementById('roster-grid');
+  const slots = buildRosterSlotList();
+  const needs = computeNeeds();
+  document.getElementById('roster-count').textContent = `${needs.myCount} drafted · ${needs.benchRemaining} bench open`;
+  grid.innerHTML = slots.map(s=>{
+    return `<div class="slot ${s.player?'filled':''}">
+      <div class="lbl">${s.label}</div>
+      <div class="val">${s.player ? escapeHtml(s.player.name) : '— open —'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAvailableList(){
+  const q = document.getElementById('draft-search').value.trim().toLowerCase();
+  let list = available();
+  if(draftFilter!=='ALL') list = list.filter(p=>p.pos===draftFilter);
+  if(q) list = list.filter(p=> p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q));
+  const container = document.getElementById('available-list');
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">No available players match.</div>';
+    return;
+  }
+  container.innerHTML = list.slice(0,300).map(p=>{
+    return `<div class="player-row" data-id="${p.id}">
+      <span class="rank-num">${p.rank}</span>
+      <span class="p-name">
+        <span class="nm">${escapeHtml(p.name)}</span>
+        <span class="tm">${posBadge(p.pos)} ${p.team}</span>
+      </span>
+      <div class="actionbtns">
+        <button class="btn primary small" data-mine="${p.id}">Mine</button>
+        <button class="btn ghost small" data-other="${p.id}" style="border:1px solid var(--border);">Other</button>
+      </div>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('[data-mine]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.mine,'mine')));
+  container.querySelectorAll('[data-other]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.other,'other')));
+}
+
+function renderDraftedLog(){
+  const list = drafted().sort((a,b)=> b.rank - a.rank).reverse(); // just show in draft order roughly by rank asc is fine
+  const container = document.getElementById('drafted-list');
+  document.getElementById('drafted-summary').textContent = `Draft log (${list.length} picks)`;
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">No picks yet.</div>';
+    return;
+  }
+  container.innerHTML = list.map(p=>{
+    const tag = p.status==='mine' ? '<span class="mine-tag">MINE</span>' : '<span class="other-tag">OTHER</span>';
+    return `<div class="player-row" data-id="${p.id}">
+      <span class="rank-num">${p.rank}</span>
+      <span class="p-name"><span class="nm">${escapeHtml(p.name)} ${tag}</span><span class="tm">${posBadge(p.pos)} ${p.team}</span></span>
+      <button class="btn ghost small" data-undo="${p.id}" style="border:1px solid var(--border);">Undo</button>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('[data-undo]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.undo,'available',true)));
+}
+
+function setStatus(id, status, isUndo){
+  const p = state.players.find(pp=>pp.id===id);
+  if(!p) return;
+  if(!isUndo) state.history.push({id, prevStatus: p.status});
+  p.status = status;
+  renderDraftTab();
+}
+
+// ---------- settings ----------
+function renderSettingsForm(){
+  const s = state.settings;
+  document.getElementById('s-teams').value = s.teams;
+  document.getElementById('s-slot').value = s.slot;
+  document.getElementById('s-bench').value = s.bench;
+  document.getElementById('s-qb').value = s.QB;
+  document.getElementById('s-rb').value = s.RB;
+  document.getElementById('s-wr').value = s.WR;
+  document.getElementById('s-te').value = s.TE;
+  document.getElementById('s-flex').value = s.FLEX;
+  document.getElementById('s-dst').value = s.DST;
+  document.getElementById('s-k').value = s.K;
+  document.getElementById('s-scoring').value = s.scoring;
+
+  const sc = loadSyncConfig();
+  const ownerEl = document.getElementById('sync-owner');
+  const repoEl = document.getElementById('sync-repo');
+  const tokenEl = document.getElementById('sync-token');
+  if(ownerEl && !ownerEl.value && sc) ownerEl.value = sc.owner || '';
+  if(repoEl && !repoEl.value && sc) repoEl.value = sc.repo || '';
+  if(tokenEl) tokenEl.placeholder = sc && sc.token ? 'Token saved (leave blank to keep it)' : 'github_pat_...';
+  if(document.getElementById('sync-status') && document.getElementById('sync-status').textContent === 'Not connected.' && sc){
+    setSyncStatus(syncStatus.state, syncStatus.message);
+  }
+}
+
+function saveSettingsFromForm(){
+  state.settings = {
+    teams: parseInt(document.getElementById('s-teams').value)||12,
+    slot: parseInt(document.getElementById('s-slot').value)||1,
+    bench: parseInt(document.getElementById('s-bench').value)||0,
+    QB: parseInt(document.getElementById('s-qb').value)||0,
+    RB: parseInt(document.getElementById('s-rb').value)||0,
+    WR: parseInt(document.getElementById('s-wr').value)||0,
+    TE: parseInt(document.getElementById('s-te').value)||0,
+    FLEX: parseInt(document.getElementById('s-flex').value)||0,
+    DST: parseInt(document.getElementById('s-dst').value)||0,
+    K: parseInt(document.getElementById('s-k').value)||0,
+    scoring: document.getElementById('s-scoring').value || 'Half-PPR'
+  };
+  renderAll();
+}
+
+// ---------- export / import ----------
+function exportState(){
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'draft-progress-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importStateFromFile(file){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(parsed && parsed.players && parsed.settings){
+        state = parsed;
+        if(!state.history) state.history = [];
+        renderAll();
+        alert('Progress imported.');
+      } else {
+        alert('This file does not look like a valid export.');
+      }
+    }catch(err){
+      alert('Could not read that file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ---------- wiring ----------
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-'+tab.dataset.tab).classList.add('active');
+  });
+});
+
+document.getElementById('rank-search').addEventListener('input', renderRankingsList);
+document.getElementById('draft-search').addEventListener('input', renderAvailableList);
+
+document.getElementById('add-player-btn').addEventListener('click', ()=>{
+  const name = document.getElementById('add-name').value.trim();
+  const pos = document.getElementById('add-pos').value;
+  const team = document.getElementById('add-team').value.trim().toUpperCase() || '--';
+  if(!name){ alert('Enter a player name.'); return; }
+  const newRank = state.players.length + 1;
+  state.players.push({id:'p'+Date.now(), rank:newRank, name, pos, team, status:'available'});
+  document.getElementById('add-name').value='';
+  document.getElementById('add-team').value='';
+  renderAll();
+});
+
+document.getElementById('save-settings').addEventListener('click', saveSettingsFromForm);
+document.getElementById('export-btn').addEventListener('click', exportState);
+document.getElementById('import-file').addEventListener('change', (e)=>{
+  if(e.target.files && e.target.files[0]) importStateFromFile(e.target.files[0]);
+});
+document.getElementById('reset-draft-btn').addEventListener('click', ()=>{
+  if(confirm('Clear all draft picks (mine + others) but keep your custom rankings?')){
+    state.players.forEach(p=> p.status='available');
+    state.history = [];
+    renderAll();
+  }
+});
+document.getElementById('reset-all-btn').addEventListener('click', ()=>{
+  if(confirm('Reset EVERYTHING back to the original seed rankings and settings? This cannot be undone.')){
+    state.players = freshPlayers();
+    state.settings = {...DEFAULT_SETTINGS};
+    state.history = [];
+    renderAll();
+  }
+});
+
+document.getElementById('sync-connect-btn').addEventListener('click', handleConnectSync);
+document.getElementById('sync-now-btn').addEventListener('click', handleSyncNow);
+document.getElementById('sync-disconnect-btn').addEventListener('click', handleDisconnectSync);
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && syncConfig){
+    trySyncOnLoad();
+  }
+});
+
+init();
+})();
+</script>
+</body>
+</html>
