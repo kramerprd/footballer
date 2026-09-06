@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Draft Command Center</title>
+<style>
+  :root{
+    --qb:#a855f7; --rb:#22c55e; --wr:#3b82f6; --te:#f97316; --dst:#64748b; --k:#eab308;
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --border:#2a2f3a;
+    --text:#eef0f4; --text-dim:#9aa2b1; --accent:#22c55e; --accent2:#3b82f6;
+    --danger:#ef4444; --warn:#f59e0b; --radius:12px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  body{padding-bottom:70px;}
+  #app{max-width:640px;margin:0 auto;padding:0 10px;}
+  header.top{position:sticky;top:0;z-index:20;background:rgba(15,17,21,.97);backdrop-filter:blur(6px);
+    padding:10px 10px 0;border-bottom:1px solid var(--border);}
+  h1{font-size:18px;margin:8px 0 10px;font-weight:700;letter-spacing:.2px;}
+  h1 span{color:var(--accent);}
+  .tabs{display:flex;gap:6px;}
+  .tab{flex:1;text-align:center;padding:10px 4px;border-radius:10px 10px 0 0;
+    background:transparent;color:var(--text-dim);font-weight:600;font-size:13px;
+    border:none;cursor:pointer;}
+  .tab.active{background:var(--panel);color:var(--text);}
+  .view{display:none;padding-top:12px;}
+  .view.active{display:block;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:12px;margin-bottom:10px;}
+  .row{display:flex;align-items:center;gap:8px;}
+  .between{justify-content:space-between;}
+  .wrap{flex-wrap:wrap;}
+  input[type=text],input[type=number],select{
+    background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:9px 10px;font-size:14px;width:100%;}
+  label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;}
+  button{font-family:inherit;cursor:pointer;}
+  .btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;}
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#06210f;}
+  .btn.blue{background:var(--accent2);border-color:var(--accent2);color:#08152b;}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:6px 9px;font-size:12px;}
+  .btn.danger{background:var(--danger);border-color:var(--danger);color:#2b0505;}
+  .pos-badge{display:inline-flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;color:#0b0d10;border-radius:6px;padding:2px 6px;min-width:30px;}
+  .pos-QB{background:var(--qb);color:#fff;} .pos-RB{background:var(--rb);}
+  .pos-WR{background:var(--wr);color:#fff;} .pos-TE{background:var(--te);}
+  .pos-DST{background:var(--dst);color:#fff;} .pos-K{background:var(--k);}
+  .filters{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;}
+  .chip{flex:0 0 auto;padding:6px 12px;border-radius:999px;border:1px solid var(--border);
+    background:var(--panel2);color:var(--text-dim);font-size:12px;font-weight:700;}
+  .chip.active{background:var(--text);color:#0b0d10;border-color:var(--text);}
+  .player-row{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid var(--border);}
+  .player-row:last-child{border-bottom:none;}
+  .rank-num{width:26px;text-align:right;color:var(--text-dim);font-variant-numeric:tabular-nums;font-size:13px;}
+  .handle{width:22px;text-align:center;color:var(--text-dim);font-size:18px;touch-action:none;user-select:none;padding:4px 0;}
+  .p-name{flex:1;min-width:0;}
+  .p-name .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .p-name .tm{font-size:11px;color:var(--text-dim);}
+  .arrows{display:flex;flex-direction:column;gap:2px;}
+  .arrows button{width:24px;height:20px;font-size:10px;padding:0;line-height:1;background:var(--panel2);
+    border:1px solid var(--border);color:var(--text-dim);border-radius:4px;}
+  .drafted .p-name .nm{text-decoration:line-through;color:var(--text-dim);}
+  .mine-tag{font-size:10px;font-weight:800;background:var(--accent);color:#06210f;padding:2px 6px;border-radius:5px;}
+  .other-tag{font-size:10px;font-weight:800;background:var(--panel2);color:var(--text-dim);padding:2px 6px;border-radius:5px;border:1px solid var(--border);}
+  .search-row{margin-bottom:8px;}
+  .banner{background:linear-gradient(90deg,#1f2a1f,#152018);border:1px solid #2f4a2f;border-radius:12px;
+    padding:12px;margin-bottom:10px;text-align:center;}
+  .banner.off{background:var(--panel);border-color:var(--border);}
+  .banner .big{font-size:15px;font-weight:800;color:var(--accent);}
+  .banner.off .big{color:var(--text-dim);}
+  .banner .sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .rec-card{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--panel2);}
+  .rec-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .rec-rank{font-size:11px;color:var(--text-dim);font-weight:700;}
+  .rec-why{font-size:12px;color:var(--text-dim);margin-top:5px;line-height:1.4;}
+  .rec-btns{display:flex;gap:6px;margin-top:8px;}
+  .slotgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}
+  .slot{border:1px dashed var(--border);border-radius:8px;padding:6px;font-size:11px;text-align:center;color:var(--text-dim);}
+  .slot.filled{border-style:solid;border-color:var(--accent);color:var(--text);background:rgba(34,197,94,.08);}
+  .slot .lbl{font-weight:800;font-size:10px;letter-spacing:.3px;color:var(--text-dim);}
+  .slot .val{font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .section-title{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);
+    font-weight:800;margin:2px 0 8px;}
+  details summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--text-dim);padding:4px 0;}
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .settings-grid .full{grid-column:1/-1;}
+  .helptext{font-size:12px;color:var(--text-dim);line-height:1.5;}
+  .hidden{display:none !important;}
+  .dragging{opacity:.5;background:var(--panel2);}
+  footer.note{font-size:11px;color:var(--text-dim);text-align:center;padding:16px 8px 4px;line-height:1.5;}
+  .actionbtns{display:flex;gap:4px;}
+  .actionbtns button{padding:6px 8px;font-size:11px;}
+  .empty{text-align:center;color:var(--text-dim);font-size:13px;padding:20px 8px;}
+  input[type=file]{color:var(--text-dim);font-size:12px;}
+  .toast{position:fixed;left:10px;right:10px;bottom:12px;z-index:50;max-width:620px;margin:0 auto;
+    background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    box-shadow:0 6px 24px rgba(0,0,0,.45);}
+  .toast .msg{font-size:13px;flex:1;min-width:0;}
+  .toast .msg b{color:var(--text);}
+  .tier-badge{font-size:9px;font-weight:800;color:var(--text-dim);border:1px solid var(--border);
+    border-radius:5px;padding:1px 4px;margin-left:4px;}
+  .injury-badge{font-size:9px;font-weight:800;border-radius:5px;padding:1px 5px;margin-right:4px;}
+  .injury-badge.q{background:rgba(245,158,11,.18);color:var(--warn);}
+  .injury-badge.o{background:rgba(239,68,68,.18);color:var(--danger);}
+  .expand-btn{background:transparent;border:none;color:var(--text-dim);font-size:11px;padding:4px 6px;}
+  .player-detail{padding:8px 10px 10px 40px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);}
+  .detail-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);padding:2px 0;gap:10px;}
+  .detail-row span:last-child{color:var(--text);text-align:right;}
+  .injury-controls{display:flex;gap:4px;}
+  .injury-controls button{padding:4px 8px;font-size:11px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <h1>🏈 Draft <span>Command Center</span></h1>
+    <div class="tabs">
+      <button class="tab active" data-tab="rankings">Rankings</button>
+      <button class="tab" data-tab="draft">Draft Day</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+  </header>
+
+  <div id="app-body">
+
+  <!-- RANKINGS TAB -->
+  <section class="view active" id="view-rankings">
+    <div class="card">
+      <div class="helptext">Drag <b>⠿</b> (or use the arrows) to reorder your personal board. Reordering is disabled while a search or position filter is active — clear them first.</div>
+    </div>
+    <div class="search-row">
+      <input type="text" id="rank-search" placeholder="Search player or team...">
+    </div>
+    <div class="filters" id="rank-filters"></div>
+    <div class="card" id="rank-add-card">
+      <div class="section-title">Add a player</div>
+      <div class="row wrap">
+        <input type="text" id="add-name" placeholder="Player name" style="flex:2;min-width:140px;">
+        <select id="add-pos" style="flex:1;min-width:80px;">
+          <option>QB</option><option selected>RB</option><option>WR</option><option>TE</option><option>DST</option><option>K</option>
+        </select>
+        <input type="text" id="add-team" placeholder="Team" style="flex:1;min-width:70px;">
+        <button class="btn primary small" id="add-player-btn">Add</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;">
+      <div id="rankings-list"></div>
+    </div>
+  </section>
+
+  <!-- DRAFT DAY TAB -->
+  <section class="view" id="view-draft">
+    <div id="turn-banner" class="banner off">
+      <div class="big">Pick 1 · Round 1</div>
+      <div class="sub">Set your draft slot in Settings to track turns</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Your top 3 recommendations</div>
+      <div id="rec-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="row between">
+        <div class="section-title" style="margin:0;">My roster</div>
+        <div style="font-size:12px;color:var(--text-dim);" id="roster-count"></div>
+      </div>
+      <div class="slotgrid" id="roster-grid"></div>
+    </div>
+
+    <div class="card" style="padding:0;">
+      <div style="padding:12px 12px 0;">
+        <input type="text" id="draft-search" placeholder="Search available players...">
+        <div class="filters" id="draft-filters" style="margin-top:8px;"></div>
+      </div>
+      <div id="available-list"></div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary id="drafted-summary">Draft log (0 picks)</summary>
+        <div id="drafted-list" style="margin-top:8px;"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- SETTINGS TAB -->
+  <section class="view" id="view-settings">
+    <div class="card">
+      <div class="section-title">League setup</div>
+      <div class="settings-grid">
+        <div><label>Teams</label><input type="number" id="s-teams" min="4" max="20"></div>
+        <div><label>Your slot</label><input type="number" id="s-slot" min="1" max="20"></div>
+        <div><label>Bench spots</label><input type="number" id="s-bench" min="0" max="15"></div>
+        <div><label>QB</label><input type="number" id="s-qb" min="0" max="4"></div>
+        <div><label>RB</label><input type="number" id="s-rb" min="0" max="6"></div>
+        <div><label>WR</label><input type="number" id="s-wr" min="0" max="6"></div>
+        <div><label>TE</label><input type="number" id="s-te" min="0" max="4"></div>
+        <div><label>FLEX</label><input type="number" id="s-flex" min="0" max="6"></div>
+        <div><label>DST</label><input type="number" id="s-dst" min="0" max="3"></div>
+        <div><label>K</label><input type="number" id="s-k" min="0" max="3"></div>
+        <div class="full"><label>Scoring format (label only)</label><input type="text" id="s-scoring"></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn primary" id="save-settings">Save settings</button>
+      </div>
+      <div class="helptext" style="margin-top:8px;">FLEX slots are filled by leftover RB/WR/TE. This drives the position-need scoring behind your recommendations.</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Backup / restore</div>
+      <div class="helptext">Changes autosave in this browser on this device, so refreshing or reopening the page keeps your rankings and picks. That save doesn't cross devices or browsers on its own — either use Cross-device sync below (recommended), or Export here before switching to your laptop and Import there.</div>
+      <div class="row wrap" style="margin-top:10px;">
+        <button class="btn blue" id="export-btn">Export progress (.json)</button>
+        <label class="btn ghost" style="border:1px solid var(--border);">
+          Import file
+          <input type="file" id="import-file" accept="application/json" style="display:none;">
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Cross-device sync (GitHub)</div>
+      <div class="helptext">Uses your own GitHub repo as the sync point. Once connected, opening the page, switching back to this tab, and a background check every 30 seconds all automatically pull the latest from GitHub — and every change you make pushes back out. Your phone and laptop stay in sync on their own, no manual "Sync now" needed. Your token is stored only in this browser and used solely to talk to GitHub directly — it's per-browser, so each browser you use it in needs the token entered once.</div>
+      <div class="settings-grid" style="margin-top:10px;grid-template-columns:1fr 1fr;">
+        <div><label>GitHub username</label><input type="text" id="sync-owner" placeholder="kramerprd"></div>
+        <div><label>Repo name</label><input type="text" id="sync-repo" placeholder="footballer"></div>
+      </div>
+      <div style="margin-top:8px;"><label>Access token</label><input type="password" id="sync-token" placeholder="github_pat_..."></div>
+      <div class="row wrap" style="margin-top:10px;">
+        <button class="btn primary" id="sync-connect-btn">Connect &amp; sync</button>
+        <button class="btn ghost" id="sync-now-btn" style="border:1px solid var(--border);">Sync now</button>
+        <button class="btn ghost" id="sync-disconnect-btn" style="border:1px solid var(--danger);color:var(--danger);">Disconnect</button>
+      </div>
+      <div id="sync-status" class="helptext" style="margin-top:8px;">Not connected.</div>
+      <details style="margin-top:10px;">
+        <summary>How to create the token (one-time, ~1 minute)</summary>
+        <div class="helptext" style="margin-top:6px;line-height:1.6;">
+          1. On github.com, tap your profile photo (top right) → Settings.<br>
+          2. Scroll to the bottom of the left sidebar → Developer settings.<br>
+          3. Personal access tokens → Fine-grained tokens → Generate new token.<br>
+          4. Under Repository access, choose "Only select repositories" and pick this repo.<br>
+          5. Under Permissions → Repository permissions, find "Contents" and set it to Read and write.<br>
+          6. Tap Generate token, then copy the token shown (starts with <code>github_pat_</code>) — GitHub only shows it once.<br>
+          7. Paste it into the Access token field above and tap Connect &amp; sync.
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Reset</div>
+      <div class="row wrap">
+        <button class="btn ghost ghost-danger" id="reset-draft-btn" style="border:1px solid var(--warn);color:var(--warn);">Reset draft picks only</button>
+        <button class="btn ghost" id="reset-all-btn" style="border:1px solid var(--danger);color:var(--danger);">Reset everything</button>
+      </div>
+    </div>
+
+    <footer class="note">
+      Seed rankings: half-PPR consensus ADP (community-sourced, updated 8/12/2026), plus kicker ADP. Andy Holloway's individual FantasyPros board wasn't published yet as of build time, so this consensus list stands in as your starting order — re-rank freely to match his rankings or your own read. Double-check player/team info against your league platform before draft day.
+      <br><br>
+      Tap the ▸ next to any player (Rankings or Draft Day) for ESPN, Sleeper and Yahoo ADP, a projected point total, and FantasyPros tier, researched 9/6/2026 — plus a manual Questionable/Out toggle that factors into your recommendations. Note the three ADPs use different scoring formats as published by each site (ESPN: PPR, Yahoo: standard, this board: half-PPR), so don't expect them to match your board rank exactly — they're a cross-check, not a replacement. Coverage is real-source-only: many mid/late-round players show "—" for projections or tier because FantasyPros gates that data behind a login past the top ~10-20 per position — that's an honest gap, not a zero.
+    </footer>
+  </section>
+
+  </div>
+
+  <div id="action-toast" class="toast hidden"></div>
+</div>
+
+<script>
+(function(){
+// Seed data: 2026 half-PPR consensus ADP-based rankings (FantasyFootballCalculator,
+// last updated 8/12/2026) + kicker rankings. Fully editable in-app.
+const SEED_PLAYERS = [
+["Jahmyr Gibbs","RB","DET"],["Bijan Robinson","RB","ATL"],["Puka Nacua","WR","LAR"],
+["Ja'Marr Chase","WR","CIN"],["Jaxon Smith-Njigba","WR","SEA"],["Jonathan Taylor","RB","IND"],
+["Christian McCaffrey","RB","SF"],["Amon-Ra St. Brown","WR","DET"],["James Cook III","RB","BUF"],
+["Derrick Henry","RB","BAL"],["Drake London","WR","ATL"],["De'Von Achane","RB","MIA"],
+["CeeDee Lamb","WR","DAL"],["Justin Jefferson","WR","MIN"],["Rashee Rice","WR","KC"],
+["Chase Brown","RB","CIN"],["Ashton Jeanty","RB","LV"],["A.J. Brown","WR","NE"],
+["George Pickens","WR","DAL"],["Nico Collins","WR","HOU"],["Saquon Barkley","RB","PHI"],
+["Zay Flowers","WR","BAL"],["Chris Olave","WR","NO"],["Omarion Hampton","RB","LAC"],
+["Kenneth Walker III","RB","KC"],["Josh Jacobs","RB","GB"],["Malik Nabers","WR","NYG"],
+["Breece Hall","RB","NYJ"],["Kyren Williams","RB","LAR"],["Garrett Wilson","WR","NYJ"],
+["DeVonta Smith","WR","PHI"],["Jeremiyah Love","RB","ARI"],["Tee Higgins","WR","CIN"],
+["Tetairoa McMillan","WR","CAR"],["Emeka Egbuka","WR","TB"],["Davante Adams","WR","LAR"],
+["Josh Allen","QB","BUF"],["Jameson Williams","WR","DET"],["Cam Skattebo","RB","NYG"],
+["Javonte Williams","RB","DAL"],["Ladd McConkey","WR","LAC"],["Terry McLaurin","WR","WAS"],
+["Rome Odunze","WR","CHI"],["Jaylen Waddle","WR","DEN"],["Trey McBride","TE","ARI"],
+["Mike Evans","WR","SF"],["Travis Etienne Jr.","RB","NO"],["DJ Moore","WR","BUF"],
+["Alec Pierce","WR","IND"],["D'Andre Swift","RB","CHI"],["Christian Watson","WR","GB"],
+["Bucky Irving","RB","TB"],["Brock Bowers","TE","LV"],["Courtland Sutton","WR","DEN"],
+["Luther Burden III","WR","CHI"],["DK Metcalf","WR","PIT"],["Marvin Harrison Jr.","WR","ARI"],
+["Parker Washington","WR","JAX"],["Quinshon Judkins","RB","CLE"],["Bhayshul Tuten","RB","JAX"],
+["Drake Maye","QB","NE"],["Brian Thomas Jr.","WR","JAX"],["David Montgomery","RB","HOU"],
+["Carnell Tate","WR","TEN"],["TreVeyon Henderson","RB","NE"],["Michael Wilson","WR","ARI"],
+["Joe Burrow","QB","CIN"],["Lamar Jackson","QB","BAL"],["Chris Godwin Jr.","WR","TB"],
+["Jaylen Warren","RB","PIT"],["Michael Pittman Jr.","WR","PIT"],["Seattle","DST","SEA"],
+["Quentin Johnston","WR","LAC"],["Tony Pollard","RB","TEN"],["Jakobi Meyers","WR","JAX"],
+["Jayden Reed","WR","GB"],["Josh Downs","WR","IND"],["Jordan Addison","WR","MIN"],
+["Rhamondre Stevenson","RB","NE"],["Wan'Dale Robinson","WR","TEN"],["Chuba Hubbard","RB","CAR"],
+["Colston Loveland","TE","CHI"],["Jordyn Tyson","WR","NO"],["Denver","DST","DEN"],
+["Dak Prescott","QB","DAL"],["Stefon Diggs","WR","WAS"],["Rico Dowdle","RB","PIT"],
+["Xavier Worthy","WR","KC"],["Khalil Shakir","WR","BUF"],["Jayden Daniels","QB","WAS"],
+["Romeo Doubs","WR","NE"],["Matthew Stafford","QB","LAR"],["Jalen Hurts","QB","PHI"],
+["Makai Lemon","WR","PHI"],["Brock Purdy","QB","SF"],["Deebo Samuel Sr.","WR","SF"],
+["Tyler Warren","TE","IND"],["Houston","DST","HOU"],["Caleb Williams","QB","CHI"],
+["Matthew Golden","WR","GB"],["Jadarian Price","RB","SEA"],["RJ Harvey","RB","DEN"],
+["Jalen Coker","WR","CAR"],["Trevor Lawrence","QB","JAX"],["Patrick Mahomes","QB","KC"],
+["Jared Goff","QB","DET"],["Jayden Higgins","WR","HOU"],["Rashid Shaheed","WR","SEA"],
+["Harold Fannin Jr.","TE","CLE"],["J.K. Dobbins","RB","DEN"],["Kyle Pitts Sr.","TE","ATL"],
+["LA Rams","DST","LAR"],["Justin Herbert","QB","LAC"],["KC Concepcion","WR","CLE"],
+["Minnesota","DST","MIN"],["Sam LaPorta","TE","DET"],["Bo Nix","QB","DEN"],
+["Tucker Kraft","TE","GB"],["Jaxson Dart","QB","NYG"],["New England","DST","NE"],
+["Philadelphia","DST","PHI"],["Detroit","DST","DET"],["Aaron Jones Sr.","RB","MIN"],
+["Tre Tucker","WR","LV"],["Jerry Jeudy","WR","CLE"],["Dallas Goedert","TE","PHI"],
+["Kenny Gainwell","RB","TB"],["Jalen McMillan","WR","TB"],["Pittsburgh","DST","PIT"],
+["Travis Kelce","TE","KC"],
+["Brandon Aubrey","K","DAL"],["Jason Myers","K","SEA"],["Ka'imi Fairbairn","K","HOU"],
+["Cameron Dicker","K","LAC"],["Jake Bates","K","DET"],["Harrison Mevis","K","LAR"],
+["Chase McLaughlin","K","TB"],["Tyler Loop","K","BAL"],["Will Reichard","K","MIN"],
+["Cam Little","K","JAX"],["Wil Lutz","K","DEN"],["Harrison Butker","K","KC"],
+["Blake Grupe","K","NYJ"],["Cairo Santos","K","CHI"],["Eddy Piñeiro","K","SF"],
+["Evan McPherson","K","CIN"],["Nick Folk","K","ATL"],["Andy Borregales","K","NE"],
+["Jake Elliott","K","PHI"],["Tyler Bass","K","BUF"]
+];
+
+// Per-player enrichment data researched 2026-09-06: ADP by site (ESPN, Sleeper,
+// Yahoo), a half-PPR season projection, and a position tier, where a real
+// published source had it. null means genuinely not found (paywalled, or the
+// player was not listed on that source) -- never a guessed/estimated value.
+// Sourcing notes:
+//   espnAdp    - ESPN Live Draft Trends (PPR scoring -- ESPN publishes it that way)
+//   sleeperAdp - Draft Sharks' live Sleeper ADP aggregation
+//   yahooAdp   - Yahoo Draft Analysis "All Drafts" (standard scoring, per Yahoo's own label)
+//   projPts    - FantasyPros half-PPR season projections (Std for K/DST, which
+//                do not change by scoring format); many rows null -- FantasyPros
+//                gates full projection tables behind a login past the top ~10/position
+//   tier       - FantasyPros position cheatsheet tiers; RB/WR gate around rank 20
+//                on the free page, so deeper players show null tier, not a guess
+const PLAYER_META = {
+  "Jahmyr Gibbs": {espnAdp:1.3, sleeperAdp:2, yahooAdp:1.3, projPts:334.4, tier:'RB Tier 1'},
+  "Bijan Robinson": {espnAdp:2.4, sleeperAdp:1, yahooAdp:2, projPts:316.4, tier:'RB Tier 1'},
+  "Puka Nacua": {espnAdp:5.3, sleeperAdp:9, yahooAdp:5, projPts:290.8, tier:'WR Tier 1'},
+  "Ja\'Marr Chase": {espnAdp:4.3, sleeperAdp:6, yahooAdp:3.5, projPts:277.1, tier:'WR Tier 1'},
+  "Jaxon Smith-Njigba": {espnAdp:6.3, sleeperAdp:10, yahooAdp:7.3, projPts:269.2, tier:'WR Tier 1'},
+  "Jonathan Taylor": {espnAdp:6.2, sleeperAdp:3, yahooAdp:6.1, projPts:286.8, tier:'RB Tier 1'},
+  "Christian McCaffrey": {espnAdp:7.7, sleeperAdp:4, yahooAdp:6, projPts:292.1, tier:'RB Tier 1'},
+  "Amon-Ra St. Brown": {espnAdp:8.4, sleeperAdp:18, yahooAdp:7.9, projPts:272.3, tier:'WR Tier 1'},
+  "James Cook III": {espnAdp:10.1, sleeperAdp:5, yahooAdp:9.4, projPts:255.2, tier:'RB Tier 2'},
+  "Derrick Henry": {espnAdp:16.5, sleeperAdp:7, yahooAdp:17, projPts:267.7, tier:'RB Tier 3'},
+  "Drake London": {espnAdp:20.5, sleeperAdp:21, yahooAdp:20.4, projPts:222.5, tier:'WR Tier 2'},
+  "De\'Von Achane": {espnAdp:12.8, sleeperAdp:8, yahooAdp:15.4, projPts:265.8, tier:'RB Tier 2'},
+  "CeeDee Lamb": {espnAdp:11.7, sleeperAdp:15, yahooAdp:11.2, projPts:234.7, tier:'WR Tier 2'},
+  "Justin Jefferson": {espnAdp:12.5, sleeperAdp:20, yahooAdp:13.3, projPts:223.4, tier:'WR Tier 2'},
+  "Rashee Rice": {espnAdp:29.4, sleeperAdp:34, yahooAdp:36.1, projPts:224.2, tier:'WR Tier 3'},
+  "Chase Brown": {espnAdp:17.4, sleeperAdp:19, yahooAdp:15.6, projPts:253.2, tier:'RB Tier 2'},
+  "Ashton Jeanty": {espnAdp:21.8, sleeperAdp:11, yahooAdp:18.2, projPts:null, tier:'RB Tier 3'},
+  "A.J. Brown": {espnAdp:21.2, sleeperAdp:33, yahooAdp:24, projPts:220.1, tier:'WR Tier 2'},
+  "George Pickens": {espnAdp:28.2, sleeperAdp:27, yahooAdp:22.5, projPts:null, tier:'WR Tier 2'},
+  "Nico Collins": {espnAdp:25.8, sleeperAdp:25, yahooAdp:21.4, projPts:null, tier:'WR Tier 2'},
+  "Saquon Barkley": {espnAdp:14, sleeperAdp:14, yahooAdp:11.2, projPts:251.7, tier:'RB Tier 2'},
+  "Zay Flowers": {espnAdp:44, sleeperAdp:51, yahooAdp:35.6, projPts:null, tier:'WR Tier 3'},
+  "Chris Olave": {espnAdp:29.5, sleeperAdp:30, yahooAdp:30.8, projPts:213.1, tier:'WR Tier 2'},
+  "Omarion Hampton": {espnAdp:17.9, sleeperAdp:12, yahooAdp:18.1, projPts:null, tier:'RB Tier 3'},
+  "Kenneth Walker III": {espnAdp:24.7, sleeperAdp:23, yahooAdp:15.1, projPts:234.4, tier:'RB Tier 2'},
+  "Josh Jacobs": {espnAdp:90.4, sleeperAdp:null, yahooAdp:54.5, projPts:null, tier:null},
+  "Malik Nabers": {espnAdp:35.3, sleeperAdp:29, yahooAdp:30.2, projPts:null, tier:'WR Tier 3'},
+  "Breece Hall": {espnAdp:36, sleeperAdp:26, yahooAdp:34.5, projPts:null, tier:'RB Tier 3'},
+  "Kyren Williams": {espnAdp:34.7, sleeperAdp:13, yahooAdp:27.8, projPts:null, tier:'RB Tier 3'},
+  "Garrett Wilson": {espnAdp:37.1, sleeperAdp:38, yahooAdp:47.3, projPts:null, tier:'WR Tier 3'},
+  "DeVonta Smith": {espnAdp:36.4, sleeperAdp:54, yahooAdp:29.5, projPts:null, tier:'WR Tier 3'},
+  "Jeremiyah Love": {espnAdp:25.7, sleeperAdp:17, yahooAdp:29.8, projPts:null, tier:'RB Tier 4'},
+  "Tee Higgins": {espnAdp:51.8, sleeperAdp:36, yahooAdp:33.7, projPts:null, tier:'WR Tier 3'},
+  "Tetairoa McMillan": {espnAdp:42.5, sleeperAdp:37, yahooAdp:41.9, projPts:null, tier:'WR Tier 3'},
+  "Emeka Egbuka": {espnAdp:45, sleeperAdp:56, yahooAdp:46, projPts:null, tier:null},
+  "Davante Adams": {espnAdp:46, sleeperAdp:45, yahooAdp:57.2, projPts:null, tier:null},
+  "Josh Allen": {espnAdp:19.1, sleeperAdp:16, yahooAdp:20.9, projPts:367.3, tier:'QB Tier 1'},
+  "Jameson Williams": {espnAdp:64.2, sleeperAdp:53, yahooAdp:65.3, projPts:null, tier:null},
+  "Cam Skattebo": {espnAdp:45, sleeperAdp:41, yahooAdp:42.4, projPts:null, tier:'RB Tier 4'},
+  "Javonte Williams": {espnAdp:32.5, sleeperAdp:31, yahooAdp:33.1, projPts:null, tier:'RB Tier 3'},
+  "Ladd McConkey": {espnAdp:45.9, sleeperAdp:47, yahooAdp:44.6, projPts:null, tier:'WR Tier 3'},
+  "Terry McLaurin": {espnAdp:60.9, sleeperAdp:57, yahooAdp:54.5, projPts:null, tier:null},
+  "Rome Odunze": {espnAdp:66.1, sleeperAdp:72, yahooAdp:66.6, projPts:null, tier:null},
+  "Jaylen Waddle": {espnAdp:52.6, sleeperAdp:42, yahooAdp:39.6, projPts:null, tier:'WR Tier 3'},
+  "Trey McBride": {espnAdp:23.2, sleeperAdp:22, yahooAdp:27.6, projPts:204.7, tier:'TE Tier 1'},
+  "Mike Evans": {espnAdp:83.8, sleeperAdp:62, yahooAdp:70, projPts:null, tier:null},
+  "Travis Etienne Jr.": {espnAdp:39.9, sleeperAdp:35, yahooAdp:41.7, projPts:null, tier:'RB Tier 4'},
+  "DJ Moore": {espnAdp:59.3, sleeperAdp:61, yahooAdp:58.5, projPts:null, tier:null},
+  "Alec Pierce": {espnAdp:107.1, sleeperAdp:99, yahooAdp:96.2, projPts:null, tier:null},
+  "D\'Andre Swift": {espnAdp:52.1, sleeperAdp:48, yahooAdp:45.4, projPts:null, tier:'RB Tier 4'},
+  "Christian Watson": {espnAdp:88.6, sleeperAdp:68, yahooAdp:67.7, projPts:null, tier:null},
+  "Bucky Irving": {espnAdp:56.6, sleeperAdp:32, yahooAdp:53.6, projPts:null, tier:'RB Tier 4'},
+  "Brock Bowers": {espnAdp:23.9, sleeperAdp:28, yahooAdp:20.9, projPts:192.4, tier:'TE Tier 1'},
+  "Courtland Sutton": {espnAdp:81.6, sleeperAdp:77, yahooAdp:106.6, projPts:null, tier:null},
+  "Luther Burden III": {espnAdp:74.8, sleeperAdp:40, yahooAdp:57.6, projPts:null, tier:null},
+  "DK Metcalf": {espnAdp:85.6, sleeperAdp:79, yahooAdp:85.5, projPts:null, tier:null},
+  "Marvin Harrison Jr.": {espnAdp:79.1, sleeperAdp:88, yahooAdp:78.2, projPts:null, tier:null},
+  "Parker Washington": {espnAdp:90, sleeperAdp:80, yahooAdp:76.5, projPts:null, tier:null},
+  "Quinshon Judkins": {espnAdp:48.1, sleeperAdp:44, yahooAdp:54.5, projPts:null, tier:null},
+  "Bhayshul Tuten": {espnAdp:61.4, sleeperAdp:43, yahooAdp:61.3, projPts:null, tier:null},
+  "Drake Maye": {espnAdp:46.9, sleeperAdp:50, yahooAdp:47.9, projPts:325, tier:'QB Tier 1'},
+  "Brian Thomas Jr.": {espnAdp:113.7, sleeperAdp:83, yahooAdp:83.9, projPts:null, tier:null},
+  "David Montgomery": {espnAdp:61.5, sleeperAdp:49, yahooAdp:53, projPts:null, tier:null},
+  "Carnell Tate": {espnAdp:79.1, sleeperAdp:63, yahooAdp:82, projPts:null, tier:null},
+  "TreVeyon Henderson": {espnAdp:77.3, sleeperAdp:39, yahooAdp:67.6, projPts:null, tier:null},
+  "Michael Wilson": {espnAdp:103.8, sleeperAdp:81, yahooAdp:100.5, projPts:null, tier:null},
+  "Joe Burrow": {espnAdp:53.3, sleeperAdp:55, yahooAdp:50.5, projPts:313.7, tier:'QB Tier 1'},
+  "Lamar Jackson": {espnAdp:34, sleeperAdp:24, yahooAdp:38.7, projPts:328.1, tier:'QB Tier 1'},
+  "Chris Godwin Jr.": {espnAdp:123.1, sleeperAdp:94, yahooAdp:95, projPts:null, tier:null},
+  "Jaylen Warren": {espnAdp:86.1, sleeperAdp:52, yahooAdp:75.8, projPts:null, tier:null},
+  "Michael Pittman Jr.": {espnAdp:90.1, sleeperAdp:118, yahooAdp:121.2, projPts:null, tier:null},
+  "Seattle": {espnAdp:113.2, sleeperAdp:133, yahooAdp:109.2, projPts:110.6, tier:'DST Tier 1'},
+  "Quentin Johnston": {espnAdp:132.5, sleeperAdp:123, yahooAdp:108.2, projPts:null, tier:null},
+  "Tony Pollard": {espnAdp:86.8, sleeperAdp:67, yahooAdp:86, projPts:null, tier:null},
+  "Jakobi Meyers": {espnAdp:122.2, sleeperAdp:82, yahooAdp:130.6, projPts:null, tier:null},
+  "Jayden Reed": {espnAdp:139.7, sleeperAdp:134, yahooAdp:115.6, projPts:null, tier:null},
+  "Josh Downs": {espnAdp:137.1, sleeperAdp:124, yahooAdp:105.6, projPts:null, tier:null},
+  "Jordan Addison": {espnAdp:122.7, sleeperAdp:107, yahooAdp:115.4, projPts:null, tier:null},
+  "Rhamondre Stevenson": {espnAdp:77.8, sleeperAdp:60, yahooAdp:76.5, projPts:null, tier:null},
+  "Wan\'Dale Robinson": {espnAdp:112.4, sleeperAdp:115, yahooAdp:130.8, projPts:null, tier:null},
+  "Chuba Hubbard": {espnAdp:109.9, sleeperAdp:71, yahooAdp:90.8, projPts:null, tier:null},
+  "Colston Loveland": {espnAdp:42.3, sleeperAdp:46, yahooAdp:39.2, projPts:171.2, tier:'TE Tier 1'},
+  "Jordyn Tyson": {espnAdp:168.1, sleeperAdp:65, yahooAdp:102.6, projPts:null, tier:null},
+  "Denver": {espnAdp:99, sleeperAdp:146, yahooAdp:102.6, projPts:116.9, tier:'DST Tier 1'},
+  "Dak Prescott": {espnAdp:71.9, sleeperAdp:106, yahooAdp:73.1, projPts:315.8, tier:'QB Tier 2'},
+  "Stefon Diggs": {espnAdp:102.7, sleeperAdp:129, yahooAdp:105.3, projPts:null, tier:null},
+  "Rico Dowdle": {espnAdp:96, sleeperAdp:69, yahooAdp:86.5, projPts:null, tier:null},
+  "Xavier Worthy": {espnAdp:131.7, sleeperAdp:138, yahooAdp:129.1, projPts:null, tier:null},
+  "Khalil Shakir": {espnAdp:139.5, sleeperAdp:136, yahooAdp:130.7, projPts:null, tier:null},
+  "Jayden Daniels": {espnAdp:52.9, sleeperAdp:70, yahooAdp:55.9, projPts:312.7, tier:'QB Tier 2'},
+  "Romeo Doubs": {espnAdp:148, sleeperAdp:130, yahooAdp:132.1, projPts:null, tier:null},
+  "Matthew Stafford": {espnAdp:93.2, sleeperAdp:132, yahooAdp:99.5, projPts:null, tier:'QB Tier 3'},
+  "Jalen Hurts": {espnAdp:54.6, sleeperAdp:75, yahooAdp:56.2, projPts:321.8, tier:'QB Tier 2'},
+  "Makai Lemon": {espnAdp:133.8, sleeperAdp:null, yahooAdp:117.9, projPts:null, tier:null},
+  "Brock Purdy": {espnAdp:110, sleeperAdp:117, yahooAdp:98.4, projPts:310.9, tier:'QB Tier 3'},
+  "Deebo Samuel Sr.": {espnAdp:144.3, sleeperAdp:158, yahooAdp:127.3, projPts:null, tier:null},
+  "Tyler Warren": {espnAdp:51.8, sleeperAdp:59, yahooAdp:47, projPts:161.9, tier:'TE Tier 2'},
+  "Houston": {espnAdp:92.8, sleeperAdp:128, yahooAdp:94.2, projPts:120.3, tier:'DST Tier 1'},
+  "Caleb Williams": {espnAdp:87.4, sleeperAdp:96, yahooAdp:66.5, projPts:null, tier:'QB Tier 2'},
+  "Matthew Golden": {espnAdp:114.1, sleeperAdp:193, yahooAdp:125.3, projPts:null, tier:null},
+  "Jadarian Price": {espnAdp:66.5, sleeperAdp:85, yahooAdp:63.4, projPts:null, tier:null},
+  "RJ Harvey": {espnAdp:127, sleeperAdp:58, yahooAdp:109.5, projPts:null, tier:null},
+  "Jalen Coker": {espnAdp:154.5, sleeperAdp:151, yahooAdp:133.3, projPts:null, tier:null},
+  "Trevor Lawrence": {espnAdp:102.5, sleeperAdp:101, yahooAdp:83.3, projPts:311.7, tier:'QB Tier 2'},
+  "Patrick Mahomes": {espnAdp:109.3, sleeperAdp:111, yahooAdp:104.3, projPts:305.8, tier:'QB Tier 3'},
+  "Jared Goff": {espnAdp:137.1, sleeperAdp:153, yahooAdp:113.1, projPts:null, tier:'QB Tier 3'},
+  "Jayden Higgins": {espnAdp:170, sleeperAdp:null, yahooAdp:132.9, projPts:null, tier:null},
+  "Rashid Shaheed": {espnAdp:160.7, sleeperAdp:196, yahooAdp:128.3, projPts:null, tier:null},
+  "Harold Fannin Jr.": {espnAdp:70.6, sleeperAdp:66, yahooAdp:70.6, projPts:158.6, tier:'TE Tier 2'},
+  "J.K. Dobbins": {espnAdp:111.7, sleeperAdp:74, yahooAdp:94.5, projPts:null, tier:null},
+  "Kyle Pitts Sr.": {espnAdp:68.7, sleeperAdp:78, yahooAdp:72, projPts:null, tier:'TE Tier 2'},
+  "LA Rams": {espnAdp:98.9, sleeperAdp:122, yahooAdp:86.9, projPts:109.3, tier:'DST Tier 1'},
+  "Justin Herbert": {espnAdp:85.6, sleeperAdp:93, yahooAdp:70.3, projPts:null, tier:'QB Tier 2'},
+  "KC Concepcion": {espnAdp:147.7, sleeperAdp:149, yahooAdp:122.8, projPts:null, tier:null},
+  "Minnesota": {espnAdp:169, sleeperAdp:183, yahooAdp:131.9, projPts:112.6, tier:'DST Tier 2'},
+  "Sam LaPorta": {espnAdp:74.6, sleeperAdp:84, yahooAdp:63.1, projPts:155.2, tier:'TE Tier 2'},
+  "Bo Nix": {espnAdp:104, sleeperAdp:137, yahooAdp:98.6, projPts:null, tier:'QB Tier 3'},
+  "Tucker Kraft": {espnAdp:91.2, sleeperAdp:76, yahooAdp:60.1, projPts:143.9, tier:'TE Tier 2'},
+  "Jaxson Dart": {espnAdp:82.9, sleeperAdp:90, yahooAdp:93.2, projPts:null, tier:'QB Tier 3'},
+  "New England": {espnAdp:153.9, sleeperAdp:169, yahooAdp:130.1, projPts:null, tier:'DST Tier 2'},
+  "Philadelphia": {espnAdp:137.9, sleeperAdp:142, yahooAdp:123.9, projPts:null, tier:'DST Tier 2'},
+  "Detroit": {espnAdp:155.3, sleeperAdp:192, yahooAdp:136.6, projPts:106.9, tier:'DST Tier 4'},
+  "Aaron Jones Sr.": {espnAdp:115.4, sleeperAdp:91, yahooAdp:124.4, projPts:null, tier:null},
+  "Tre Tucker": {espnAdp:169.4, sleeperAdp:231, yahooAdp:128.5, projPts:null, tier:null},
+  "Jerry Jeudy": {espnAdp:168.9, sleeperAdp:194, yahooAdp:null, projPts:null, tier:null},
+  "Dallas Goedert": {espnAdp:102.5, sleeperAdp:100, yahooAdp:104.9, projPts:150.3, tier:'TE Tier 3'},
+  "Kenny Gainwell": {espnAdp:100, sleeperAdp:92, yahooAdp:120.3, projPts:null, tier:null},
+  "Jalen McMillan": {espnAdp:163.6, sleeperAdp:200, yahooAdp:null, projPts:null, tier:null},
+  "Pittsburgh": {espnAdp:122.3, sleeperAdp:220, yahooAdp:137, projPts:112.4, tier:'DST Tier 2'},
+  "Travis Kelce": {espnAdp:94.3, sleeperAdp:116, yahooAdp:94.9, projPts:148, tier:'TE Tier 3'},
+  "Brandon Aubrey": {espnAdp:82.9, sleeperAdp:120, yahooAdp:87.5, projPts:151.4, tier:'K Tier 1'},
+  "Jason Myers": {espnAdp:114, sleeperAdp:152, yahooAdp:121.9, projPts:150.4, tier:'K Tier 2'},
+  "Ka\'imi Fairbairn": {espnAdp:123.6, sleeperAdp:188, yahooAdp:118.8, projPts:144.5, tier:'K Tier 1'},
+  "Cameron Dicker": {espnAdp:111.4, sleeperAdp:148, yahooAdp:124, projPts:142.7, tier:'K Tier 1'},
+  "Jake Bates": {espnAdp:156.7, sleeperAdp:216, yahooAdp:137.8, projPts:136, tier:'K Tier 3'},
+  "Harrison Mevis": {espnAdp:132.6, sleeperAdp:182, yahooAdp:131.9, projPts:135.3, tier:'K Tier 3'},
+  "Chase McLaughlin": {espnAdp:170.2, sleeperAdp:250, yahooAdp:139.2, projPts:132.9, tier:'K Tier 3'},
+  "Tyler Loop": {espnAdp:165.6, sleeperAdp:175, yahooAdp:139.3, projPts:null, tier:'K Tier 2'},
+  "Will Reichard": {espnAdp:167.8, sleeperAdp:213, yahooAdp:142.6, projPts:null, tier:'K Tier 3'},
+  "Cam Little": {espnAdp:140.9, sleeperAdp:181, yahooAdp:130.6, projPts:null, tier:'K Tier 1'},
+  "Wil Lutz": {espnAdp:169.6, sleeperAdp:218, yahooAdp:136.2, projPts:null, tier:'K Tier 3'},
+  "Harrison Butker": {espnAdp:144.1, sleeperAdp:186, yahooAdp:129.3, projPts:null, tier:'K Tier 3'},
+  "Blake Grupe": {espnAdp:170, sleeperAdp:null, yahooAdp:null, projPts:null, tier:'K Tier 4'},
+  "Cairo Santos": {espnAdp:168.9, sleeperAdp:237, yahooAdp:144.1, projPts:133.3, tier:'K Tier 3'},
+  "Eddy Piñeiro": {espnAdp:null, sleeperAdp:221, yahooAdp:null, projPts:132.6, tier:'K Tier 2'},
+  "Evan McPherson": {espnAdp:169.3, sleeperAdp:262, yahooAdp:142.1, projPts:null, tier:'K Tier 3'},
+  "Nick Folk": {espnAdp:170.3, sleeperAdp:287, yahooAdp:128, projPts:null, tier:'K Tier 4'},
+  "Andy Borregales": {espnAdp:170.1, sleeperAdp:190, yahooAdp:142.9, projPts:null, tier:'K Tier 3'},
+  "Jake Elliott": {espnAdp:169.1, sleeperAdp:278, yahooAdp:128.1, projPts:null, tier:'K Tier 4'},
+  "Tyler Bass": {espnAdp:169.6, sleeperAdp:293, yahooAdp:132.8, projPts:null, tier:'K Tier 4'}
+};
+
+
+
+const DEFAULT_SETTINGS = {
+  teams: 12, slot: 1, bench: 7,
+  QB:1, RB:2, WR:2, TE:1, FLEX:2, DST:1, K:1,
+  scoring: "Half-PPR"
+};
+const FLEX_ELIGIBLE = ["RB","WR","TE"];
+const POSITIONS = ["QB","RB","WR","TE","DST","K"];
+
+let state = {
+  players: [], // {id, rank, name, pos, team, status: 'available'|'mine'|'other'}
+  settings: {...DEFAULT_SETTINGS},
+  history: [], // {id, prevStatus} — last entry powers the "Undo" toast
+  pickOffset: 0 // manual correction if a pick was ever missed/double-logged; see applyPickCorrection()
+};
+
+function freshPlayers(){
+  return SEED_PLAYERS.map((p,i)=>{
+    const meta = PLAYER_META[p[0]] || {};
+    return {
+      id: 'p'+i, rank: i+1, name: p[0], pos: p[1], team: p[2], status: 'available',
+      espnAdp: meta.espnAdp!=null ? meta.espnAdp : null,
+      sleeperAdp: meta.sleeperAdp!=null ? meta.sleeperAdp : null,
+      yahooAdp: meta.yahooAdp!=null ? meta.yahooAdp : null,
+      projPts: meta.projPts!=null ? meta.projPts : null,
+      tier: meta.tier || null,
+      injuryFlag: null // set manually in-app; never seeded, since it goes stale fast
+    };
+  });
+}
+
+// One-time data corrections that need to reach boards created *before* the
+// fix, not just brand-new ones. A saved board (localStorage or synced
+// state.json) freezes each player's fields at the moment it was first
+// created from SEED_PLAYERS, so updating SEED_PLAYERS alone only affects
+// people who reset/start fresh after the update. This runs on every render
+// so existing custom-ordered boards pick up the correction too, without
+// touching rank or status. Safe to run repeatedly — it's a no-op once applied.
+const TEAM_CORRECTIONS = {
+  "Kenneth Walker III": "KC", // signed with Kansas City; was seeded as SEA
+  "Blake Grupe": "NYJ" // claimed by the Jets off waivers from the Colts days before the opener; was seeded as IND
+};
+function applyDataFixes(){
+  state.players.forEach(p=>{
+    const fixedTeam = TEAM_CORRECTIONS[p.name];
+    if(fixedTeam && p.team !== fixedTeam) p.team = fixedTeam;
+    // backfill ADP/projection/tier metadata onto boards saved before this
+    // feature existed — same reasoning as the team corrections above
+    if(p.espnAdp === undefined){
+      const meta = PLAYER_META[p.name] || {};
+      p.espnAdp = meta.espnAdp!=null ? meta.espnAdp : null;
+      p.sleeperAdp = meta.sleeperAdp!=null ? meta.sleeperAdp : null;
+      p.yahooAdp = meta.yahooAdp!=null ? meta.yahooAdp : null;
+      p.projPts = meta.projPts!=null ? meta.projPts : null;
+      p.tier = meta.tier || null;
+    }
+    if(p.injuryFlag === undefined) p.injuryFlag = null;
+  });
+  if(!Array.isArray(state.history)) state.history = [];
+  if(typeof state.pickOffset !== 'number' || isNaN(state.pickOffset)) state.pickOffset = 0;
+}
+
+// ---------- autosave (localStorage) ----------
+const STORAGE_KEY = 'draftCommandCenter_v1';
+let suppressNextSync = false;
+function persistState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){ /* storage unavailable or full — export/import still works */ }
+  if(suppressNextSync){ suppressNextSync = false; return; }
+  scheduleSyncPush();
+}
+function loadPersistedState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(parsed && Array.isArray(parsed.players) && parsed.settings) return parsed;
+    return null;
+  }catch(e){ return null; }
+}
+
+// ---------- cross-device sync (GitHub repo as backend) ----------
+const SYNC_KEY = 'draftCommandCenter_sync_v1';
+let syncConfig = null; // {owner, repo, token, sha}
+let syncTimer = null;
+let syncStatus = {state:'idle', message:'Not connected.'};
+let dragActive = false;
+let autoSyncInterval = null;
+const AUTO_SYNC_POLL_MS = 30000; // background pull frequency while connected
+
+function loadSyncConfig(){
+  try{
+    const raw = localStorage.getItem(SYNC_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveSyncConfig(cfg){
+  syncConfig = cfg;
+  try{ localStorage.setItem(SYNC_KEY, JSON.stringify(cfg)); }catch(e){}
+}
+function clearSyncConfig(){
+  syncConfig = null;
+  try{ localStorage.removeItem(SYNC_KEY); }catch(e){}
+}
+function b64EncodeUnicode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64DecodeUnicode(str){ return decodeURIComponent(escape(atob(str))); }
+
+async function githubRequest(path, options){
+  options = options || {};
+  const url = `https://api.github.com/repos/${syncConfig.owner}/${syncConfig.repo}/contents/${path}`;
+  const headers = Object.assign({
+    'Accept':'application/vnd.github+json',
+    'Authorization':'Bearer ' + syncConfig.token,
+    'X-GitHub-Api-Version':'2022-11-28'
+  }, options.headers||{});
+  return fetch(url, Object.assign({}, options, {headers}));
+}
+
+async function syncPull(){
+  if(!syncConfig) return {ok:false, reason:'not-configured'};
+  try{
+    const resp = await githubRequest('state.json');
+    if(resp.status === 404) return {ok:true, remoteExists:false};
+    if(!resp.ok) return {ok:false, reason:'http-'+resp.status};
+    const data = await resp.json();
+    syncConfig.sha = data.sha;
+    saveSyncConfig(syncConfig);
+    const jsonStr = b64DecodeUnicode(String(data.content).replace(/\n/g,''));
+    return {ok:true, remoteExists:true, remoteState: JSON.parse(jsonStr)};
+  }catch(e){
+    return {ok:false, reason:'network'};
+  }
+}
+
+async function syncPush(){
+  if(!syncConfig) return {ok:false, reason:'not-configured'};
+  try{
+    const body = {
+      message: 'Sync draft state',
+      content: b64EncodeUnicode(JSON.stringify(state))
+    };
+    if(syncConfig.sha) body.sha = syncConfig.sha;
+    let resp = await githubRequest('state.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    if(!resp.ok && (resp.status===409 || resp.status===422)){
+      const pull = await syncPull();
+      if(pull.ok){
+        const retryBody = Object.assign({}, body, {sha: syncConfig.sha});
+        resp = await githubRequest('state.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(retryBody)});
+      }
+    }
+    if(!resp.ok) return {ok:false, reason:'http-'+resp.status};
+    const data = await resp.json();
+    syncConfig.sha = data.content.sha;
+    saveSyncConfig(syncConfig);
+    return {ok:true};
+  }catch(e){
+    return {ok:false, reason:'network'};
+  }
+}
+
+function describeSyncError(result){
+  if(!result) return 'Sync error.';
+  if(result.reason==='http-401') return 'GitHub rejected the token — check it was copied correctly and has Contents: Read and write permission.';
+  if(result.reason==='http-404') return 'Repo not found — double check the username and repo name.';
+  if(result.reason==='http-403') return 'Forbidden — token may lack permission, or a rate limit was hit.';
+  if(result.reason==='http-409' || result.reason==='http-422') return 'Sync conflict — tap Sync now to retry.';
+  if(result.reason==='network') return 'Network error — check your connection and try again.';
+  return 'Sync error (' + result.reason + ').';
+}
+
+function setSyncStatus(kind, message){
+  syncStatus = {state:kind, message};
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  el.textContent = message + (kind==='ok' ? ' · ' + new Date().toLocaleTimeString() : '');
+  el.style.color = kind==='error' ? 'var(--danger)' : (kind==='ok' ? 'var(--accent)' : 'var(--text-dim)');
+}
+
+function scheduleSyncPush(){
+  if(!syncConfig) return;
+  if(syncTimer) clearTimeout(syncTimer);
+  setSyncStatus('syncing','Syncing…');
+  syncTimer = setTimeout(async ()=>{
+    const res = await syncPush();
+    if(res.ok) setSyncStatus('ok','Synced'); else setSyncStatus('error', describeSyncError(res));
+  }, 1500);
+}
+
+async function trySyncOnLoad(){
+  syncConfig = loadSyncConfig();
+  if(!syncConfig) return;
+  setSyncStatus('syncing','Checking for updates…');
+  const pull = await syncPull();
+  if(pull.ok && pull.remoteExists){
+    suppressNextSync = true;
+    state = pull.remoteState;
+    if(!state.history) state.history = [];
+    renderAll();
+    setSyncStatus('ok','Synced');
+  } else if(pull.ok && !pull.remoteExists){
+    setSyncStatus('idle','Connected — no synced data yet.');
+  } else {
+    setSyncStatus('error', describeSyncError(pull));
+  }
+  startAutoSyncPolling();
+}
+
+// Background auto-pull: once connected, periodically check GitHub for changes
+// pushed from another device, without needing a manual "Sync now" tap or a
+// tab-switch to trigger it. Skipped while a push is still debounced/pending
+// or while the user is mid-drag, so it never clobbers an in-flight edit.
+function startAutoSyncPolling(){
+  if(autoSyncInterval) clearInterval(autoSyncInterval);
+  if(!syncConfig) return;
+  autoSyncInterval = setInterval(async ()=>{
+    if(!syncConfig) return;
+    if(dragActive || syncTimer) return; // don't yank state during a local edit
+    if(document.visibilityState !== 'visible') return; // visibilitychange handler covers focus regain
+    const pull = await syncPull();
+    if(pull.ok && pull.remoteExists){
+      suppressNextSync = true;
+      state = pull.remoteState;
+      if(!state.history) state.history = [];
+      renderAll();
+      setSyncStatus('ok','Synced');
+    }
+  }, AUTO_SYNC_POLL_MS);
+}
+
+function stopAutoSyncPolling(){
+  if(autoSyncInterval){ clearInterval(autoSyncInterval); autoSyncInterval = null; }
+}
+
+async function handleConnectSync(){
+  const owner = document.getElementById('sync-owner').value.trim();
+  const repo = document.getElementById('sync-repo').value.trim();
+  const tokenInput = document.getElementById('sync-token').value.trim();
+  const existing = loadSyncConfig();
+  const token = tokenInput || (existing ? existing.token : '');
+  if(!owner || !repo || !token){ alert('Fill in username, repo, and token.'); return; }
+  saveSyncConfig({owner, repo, token, sha: null});
+  setSyncStatus('syncing','Connecting…');
+  const pull = await syncPull();
+  if(!pull.ok){ setSyncStatus('error', describeSyncError(pull)); return; }
+  if(pull.remoteExists){
+    const useRemote = confirm("Found existing synced data on GitHub. Tap OK to load it onto this device (replacing what's here now), or Cancel to keep this device's data and overwrite the synced copy.");
+    if(useRemote){
+      suppressNextSync = true;
+      state = pull.remoteState;
+      if(!state.history) state.history = [];
+      renderAll();
+      setSyncStatus('ok','Connected — loaded synced data.');
+      startAutoSyncPolling();
+      return;
+    }
+  }
+  const push = await syncPush();
+  setSyncStatus(push.ok ? 'ok' : 'error', push.ok ? 'Connected — synced.' : describeSyncError(push));
+  startAutoSyncPolling();
+}
+
+async function handleSyncNow(){
+  if(!syncConfig){ alert('Connect sync first.'); return; }
+  setSyncStatus('syncing','Syncing…');
+  const pull = await syncPull();
+  if(pull.ok && pull.remoteExists){
+    suppressNextSync = true;
+    state = pull.remoteState;
+    if(!state.history) state.history = [];
+    renderAll();
+  }
+  const push = await syncPush();
+  setSyncStatus(push.ok ? 'ok' : 'error', push.ok ? 'Synced' : describeSyncError(push));
+}
+
+function handleDisconnectSync(){
+  if(confirm('Disconnect sync? Your data stays on this device either way.')){
+    clearSyncConfig();
+    setSyncStatus('idle','Not connected.');
+    stopAutoSyncPolling();
+  }
+}
+
+function init(){
+  const saved = loadPersistedState();
+  if(saved){
+    state = saved;
+    if(!state.history) state.history = [];
+  } else {
+    state.players = freshPlayers();
+  }
+  renderAll();
+  trySyncOnLoad();
+}
+
+// ---------- helpers ----------
+function byRank(a,b){ return a.rank - b.rank; }
+function available(){ return state.players.filter(p=>p.status==='available').sort(byRank); }
+function mine(){ return state.players.filter(p=>p.status==='mine').sort(byRank); }
+function others(){ return state.players.filter(p=>p.status==='other').sort(byRank); }
+function drafted(){ return state.players.filter(p=>p.status!=='available').sort(byRank); }
+
+function posBadge(pos){ return '<span class="pos-badge pos-'+pos+'">'+pos+'</span>'; }
+
+// ---------- player enrichment display (ADP-by-site, projections, tier, injury flag) ----------
+let expandedIds = new Set();
+function tierShort(tier){
+  if(!tier) return '';
+  const m = tier.match(/Tier (\d+)/);
+  return m ? 'T'+m[1] : tier;
+}
+function tierBadgeHtml(p){
+  return p.tier ? `<span class="tier-badge" title="${escapeHtml(p.tier)} (FantasyPros)">${tierShort(p.tier)}</span>` : '';
+}
+function injuryBadgeHtml(p){
+  if(p.injuryFlag === 'Q') return '<span class="injury-badge q" title="Marked Questionable">Q</span>';
+  if(p.injuryFlag === 'O') return '<span class="injury-badge o" title="Marked Out/Suspended">O</span>';
+  return '';
+}
+function fmtAdp(v){ return v!=null ? v.toFixed(1) : '—'; }
+function renderDetailPanel(p){
+  return `<div class="player-detail" data-detail-for="${p.id}">
+    <div class="detail-row"><span>ESPN ADP</span><span>${fmtAdp(p.espnAdp)}</span></div>
+    <div class="detail-row"><span>Sleeper ADP</span><span>${fmtAdp(p.sleeperAdp)}</span></div>
+    <div class="detail-row"><span>Yahoo ADP</span><span>${fmtAdp(p.yahooAdp)}</span></div>
+    <div class="detail-row"><span>Proj. pts (half-PPR)</span><span>${p.projPts!=null ? p.projPts.toFixed(1) : '—'}</span></div>
+    <div class="detail-row"><span>Tier</span><span>${p.tier ? escapeHtml(p.tier) : '—'}</span></div>
+    <div class="detail-row" style="align-items:center;"><span>Status</span>
+      <span class="injury-controls">
+        <button class="btn small ${!p.injuryFlag?'primary':''}" data-injury="${p.id}" data-flag="">Healthy</button>
+        <button class="btn small ${p.injuryFlag==='Q'?'primary':''}" data-injury="${p.id}" data-flag="Q">Questionable</button>
+        <button class="btn small ${p.injuryFlag==='O'?'primary':''}" data-injury="${p.id}" data-flag="O">Out</button>
+      </span>
+    </div>
+  </div>`;
+}
+function wireDetailPanel(container){
+  container.querySelectorAll('[data-injury]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const p = state.players.find(pp=>pp.id===btn.dataset.injury);
+      if(p){ p.injuryFlag = btn.dataset.flag || null; renderAll(); }
+    });
+  });
+}
+function toggleExpand(id, rerender){
+  if(expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id);
+  rerender();
+}
+
+// ---------- roster need calculation ----------
+function computeNeeds(){
+  const s = state.settings;
+  const my = mine();
+  const counts = {QB:0,RB:0,WR:0,TE:0,DST:0,K:0};
+  my.forEach(p=>{ if(counts[p.pos]!==undefined) counts[p.pos]++; });
+
+  const remainingDirect = {};
+  const leftover = {};
+  POSITIONS.forEach(pos=>{
+    const cap = s[pos] || 0;
+    const used = Math.min(counts[pos], cap);
+    remainingDirect[pos] = cap - used;
+    leftover[pos] = counts[pos] - used;
+  });
+  const flexPool = FLEX_ELIGIBLE.reduce((sum,pos)=> sum + Math.max(0,leftover[pos]||0), 0);
+  const usedFlex = Math.min(flexPool, s.FLEX || 0);
+  const remainingFlex = (s.FLEX||0) - usedFlex;
+
+  const starterTotal = POSITIONS.reduce((sum,pos)=> sum + (s[pos]||0), 0) + (s.FLEX||0);
+  const benchUsed = Math.max(0, my.length - starterTotal);
+  const benchRemaining = Math.max(0, (s.bench||0) - benchUsed);
+
+  const openStarterSlots = POSITIONS.reduce((sum,pos)=> sum + Math.max(0,remainingDirect[pos]), 0) + Math.max(0,remainingFlex);
+  const totalOpen = openStarterSlots + benchRemaining;
+
+  return { remainingDirect, remainingFlex, benchRemaining, totalOpen, openStarterSlots, myCount: my.length };
+}
+
+function buildRosterSlotList(){
+  const s = state.settings;
+  const my = mine();
+  const counts = {QB:[],RB:[],WR:[],TE:[],DST:[],K:[]};
+  my.forEach(p=>{ if(counts[p.pos]) counts[p.pos].push(p); });
+  const slots = [];
+  POSITIONS.forEach(pos=>{
+    const cap = s[pos]||0;
+    for(let i=0;i<cap;i++){
+      slots.push({label:pos, player: counts[pos][i] || null});
+    }
+  });
+  // leftover for flex
+  const leftoverFlexPlayers = [];
+  FLEX_ELIGIBLE.forEach(pos=>{
+    const cap = s[pos]||0;
+    const extra = counts[pos].slice(cap);
+    leftoverFlexPlayers.push(...extra);
+  });
+  leftoverFlexPlayers.sort(byRank);
+  const flexCap = s.FLEX||0;
+  for(let i=0;i<flexCap;i++){
+    slots.push({label:'FLEX', player: leftoverFlexPlayers[i] || null});
+  }
+  return slots;
+}
+
+// ---------- recommendations ----------
+function computeRecommendations(){
+  const avail = available();
+  if(avail.length===0) return [];
+  const needs = computeNeeds();
+  const s = state.settings;
+
+  const scored = avail.map(p=>{
+    const directOpen = (needs.remainingDirect[p.pos]||0) > 0;
+    const flexOpen = FLEX_ELIGIBLE.includes(p.pos) && needs.remainingFlex > 0;
+    const isStarterNeed = directOpen || flexOpen;
+
+    const rankScore = 1000 - p.rank;
+    const needBonus = isStarterNeed ? 150 : 0;
+
+    const nearbyCount = avail.filter(o => o.pos===p.pos && o.rank <= p.rank + 24).length;
+    const scarcityBonus = isStarterNeed ? Math.max(0, 8 - nearbyCount) * 12 : 0;
+
+    let kdstPenalty = 0;
+    if((p.pos==='K' || p.pos==='DST') && needs.totalOpen > 3){
+      kdstPenalty = -1000;
+    }
+
+    let injuryPenalty = 0;
+    if(p.injuryFlag === 'O') injuryPenalty = -900;
+    else if(p.injuryFlag === 'Q') injuryPenalty = -120;
+
+    const score = rankScore + needBonus + scarcityBonus + kdstPenalty + injuryPenalty;
+    return {p, score, isStarterNeed, nearbyCount, directOpen, flexOpen};
+  });
+
+  scored.sort((a,b)=> b.score - a.score);
+  const top3 = scored.slice(0,3);
+
+  return top3.map((entry,idx)=>{
+    const p = entry.p;
+    let why;
+    if(entry.isStarterNeed && entry.nearbyCount <= 4){
+      why = `Fills your open ${entry.directOpen ? p.pos : 'FLEX'} need, and the position is thinning — only ${entry.nearbyCount} ${p.pos}s left within your next couple rounds.`;
+    } else if(entry.isStarterNeed){
+      why = `Fills your open ${entry.directOpen ? p.pos : 'FLEX'} slot at strong value (currently ranked #${p.rank} overall on your board).`;
+    } else if(idx===0){
+      why = `Best player available by your rankings — no urgent starter need right now, so take the top talent.`;
+    } else {
+      why = `Strong value at your current rank; good bench/depth stash even without an immediate starting need.`;
+    }
+    if(p.injuryFlag === 'O') why = `⚠ You flagged this player Out/Suspended — double-check before drafting. ` + why;
+    else if(p.injuryFlag === 'Q') why = `⚠ You flagged this player Questionable. ` + why;
+    return {player:p, why, rank: idx+1};
+  });
+}
+
+// ---------- turn tracking ----------
+function computeTurn(){
+  const s = state.settings;
+  const totalPicks = mine().length + others().length + (state.pickOffset||0);
+  const pickNum = totalPicks + 1;
+  const round = Math.ceil(pickNum / s.teams);
+  const posInRound = ((pickNum - 1) % s.teams) + 1;
+  const slotOnClock = (round % 2 === 1) ? posInRound : (s.teams - posInRound + 1);
+  const isMyTurn = slotOnClock === s.slot;
+  const picksUntilMe = (()=>{
+    // simulate forward to find next pick where slotOnClock === s.slot
+    let n = pickNum;
+    for(let i=0;i<s.teams*2;i++){
+      const r = Math.ceil(n / s.teams);
+      const pir = ((n - 1) % s.teams) + 1;
+      const slot = (r % 2 === 1) ? pir : (s.teams - pir + 1);
+      if(slot === s.slot) return n - pickNum;
+      n++;
+    }
+    return null;
+  })();
+  return {pickNum, round, isMyTurn, picksUntilMe};
+}
+
+function applyPickCorrection(){
+  const input = document.getElementById('pick-correct-input');
+  const val = parseInt(input.value);
+  if(!val || val < 1){ alert('Enter a valid overall pick number (1 or higher).'); return; }
+  const loggedTotal = mine().length + others().length;
+  state.pickOffset = val - 1 - loggedTotal;
+  renderDraftTab();
+}
+
+// ---------- draft-day alerts (sound + vibration + notification + title flash) ----------
+// Best-effort across browsers: desktop/Android get all four; iPhone Safari
+// mutes vibration entirely and limits Notification outside a home-screen
+// app, but the in-page sound (once unlocked by the Enable Alerts tap) and
+// the flashing tab title still work everywhere.
+const ALERTS_KEY = 'draftCommandCenter_alerts_v1';
+let alertsEnabled = false;
+try{ alertsEnabled = localStorage.getItem(ALERTS_KEY) === '1'; }catch(e){}
+let audioCtx = null;
+let lastMyTurnAlertPick = null;
+let lastWarnAlertPick = null;
+let titleFlashTimer = null;
+const ORIGINAL_TITLE = document.title;
+
+function ensureAudioContext(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+  }
+  return audioCtx;
+}
+
+function playAlertSound(){
+  const ctx = ensureAudioContext();
+  if(!ctx) return;
+  if(ctx.state === 'suspended') ctx.resume();
+  try{
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    g.gain.value = 0.16;
+    o.connect(g); g.connect(ctx.destination);
+    const t0 = ctx.currentTime;
+    o.frequency.setValueAtTime(880, t0);
+    o.frequency.setValueAtTime(660, t0 + 0.15);
+    o.frequency.setValueAtTime(880, t0 + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.55);
+    o.start(t0);
+    o.stop(t0 + 0.55);
+  }catch(e){}
+}
+
+function startTitleFlash(text){
+  stopTitleFlash();
+  let on = false;
+  titleFlashTimer = setInterval(()=>{
+    document.title = on ? ORIGINAL_TITLE : text;
+    on = !on;
+  }, 1000);
+}
+function stopTitleFlash(){
+  if(titleFlashTimer){ clearInterval(titleFlashTimer); titleFlashTimer = null; }
+  document.title = ORIGINAL_TITLE;
+}
+
+function enableDraftAlerts(){
+  ensureAudioContext();
+  if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+  alertsEnabled = true;
+  try{ localStorage.setItem(ALERTS_KEY, '1'); }catch(e){}
+  playAlertSound();
+  const btn = document.getElementById('enable-alerts-btn');
+  if(btn) btn.textContent = 'Alerts on ✓';
+}
+
+function fireTurnAlert(kind, t){
+  if(!alertsEnabled) return;
+  playAlertSound();
+  if(navigator.vibrate) navigator.vibrate(kind==='yourturn' ? [200,100,200,100,200] : [150]);
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{
+      new Notification(kind==='yourturn' ? "🟢 It's your pick!" : "Almost your turn", {
+        body: kind==='yourturn'
+          ? `Pick ${t.pickNum} · Round ${t.round} — check your recommendations.`
+          : `${t.picksUntilMe} picks until you're on the clock.`
+      });
+    }catch(e){}
+  }
+  if(kind==='yourturn') startTitleFlash('🟢 YOUR TURN!');
+}
+
+// ---------- rendering ----------
+let activeFilter = 'ALL';
+let draftFilter = 'ALL';
+
+function renderAll(){
+  applyDataFixes();
+  renderRankingsFilters();
+  renderRankingsList();
+  renderDraftFilters();
+  renderDraftTab();
+  renderSettingsForm();
+}
+
+function renderRankingsFilters(){
+  const el = document.getElementById('rank-filters');
+  const opts = ['ALL',...POSITIONS];
+  el.innerHTML = opts.map(o=>`<button class="chip ${o===activeFilter?'active':''}" data-pos="${o}">${o}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ activeFilter = btn.dataset.pos; renderRankingsFilters(); renderRankingsList(); });
+  });
+}
+
+function renderDraftFilters(){
+  const el = document.getElementById('draft-filters');
+  const opts = ['ALL',...POSITIONS];
+  el.innerHTML = opts.map(o=>`<button class="chip ${o===draftFilter?'active':''}" data-pos="${o}">${o}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ draftFilter = btn.dataset.pos; renderDraftFilters(); renderDraftTab(); });
+  });
+}
+
+function getRankingsFiltered(){
+  const q = document.getElementById('rank-search').value.trim().toLowerCase();
+  let list = [...state.players].sort(byRank);
+  if(activeFilter!=='ALL') list = list.filter(p=>p.pos===activeFilter);
+  if(q) list = list.filter(p=> p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q));
+  return list;
+}
+
+function reorderingAllowed(){
+  const q = document.getElementById('rank-search').value.trim();
+  return activeFilter==='ALL' && !q;
+}
+
+function renderRankingsList(){
+  const list = getRankingsFiltered();
+  const container = document.getElementById('rankings-list');
+  const allowDrag = reorderingAllowed();
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">No players match.</div>';
+    return;
+  }
+  container.innerHTML = list.map((p)=>{
+    const statusTag = p.status==='mine' ? '<span class="mine-tag">MINE</span>' :
+                       p.status==='other' ? '<span class="other-tag">TAKEN</span>' : '';
+    const row = `<div class="player-row ${p.status!=='available'?'drafted':''}" data-id="${p.id}">
+      <span class="rank-num">${p.rank}</span>
+      ${allowDrag ? '<span class="handle" data-drag="'+p.id+'">⠷⠷</span>' : ''}
+      <span class="p-name">
+        <span class="nm">${injuryBadgeHtml(p)}${escapeHtml(p.name)} ${statusTag}</span>
+        <span class="tm">${posBadge(p.pos)}${tierBadgeHtml(p)} ${p.team}</span>
+      </span>
+      <div class="arrows">
+        <button data-move="up" data-id="${p.id}" ${!allowDrag?'disabled':''}>▲</button>
+        <button data-move="down" data-id="${p.id}" ${!allowDrag?'disabled':''}>▼</button>
+      </div>
+      <button class="expand-btn" data-expand="${p.id}" title="ADP / projections / status">${expandedIds.has(p.id)?'▾':'▸'}</button>
+      <button class="btn small danger-outline" data-del="${p.id}" title="Remove" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);">✕</button>
+    </div>`;
+    return row + (expandedIds.has(p.id) ? renderDetailPanel(p) : '');
+  }).join('');
+
+  container.querySelectorAll('[data-expand]').forEach(btn=>{
+    btn.addEventListener('click', ()=> toggleExpand(btn.dataset.expand, renderRankingsList));
+  });
+  wireDetailPanel(container);
+  container.querySelectorAll('[data-move]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      moveRank(btn.dataset.id, btn.dataset.move);
+    });
+  });
+  container.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(confirm('Remove this player from your board entirely?')){
+        state.players = state.players.filter(p=>p.id!==btn.dataset.del);
+        renumberRanks();
+        renderAll();
+      }
+    });
+  });
+  if(allowDrag){
+    container.querySelectorAll('[data-drag]').forEach(handle=>{
+      setupDrag(handle, container);
+    });
+  }
+}
+
+function moveRank(id, dir){
+  const list = [...state.players].sort(byRank);
+  const idx = list.findIndex(p=>p.id===id);
+  if(idx<0) return;
+  const swapWith = dir==='up' ? idx-1 : idx+1;
+  if(swapWith<0 || swapWith>=list.length) return;
+  const tmp = list[idx].rank;
+  list[idx].rank = list[swapWith].rank;
+  list[swapWith].rank = tmp;
+  renderAll();
+}
+
+function renumberRanks(){
+  const list = [...state.players].sort(byRank);
+  list.forEach((p,i)=> p.rank = i+1);
+}
+
+function setupDrag(handle, container){
+  let draggedId = handle.dataset.drag;
+  let draggedEl = handle.closest('.player-row');
+  let pointerId = null;
+
+  handle.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    pointerId = e.pointerId;
+    handle.setPointerCapture(pointerId);
+    draggedEl.classList.add('dragging');
+    dragActive = true;
+
+    function onMove(ev){
+      const y = ev.clientY;
+      const rows = [...container.querySelectorAll('.player-row')];
+      for(const row of rows){
+        if(row === draggedEl) continue;
+        const rect = row.getBoundingClientRect();
+        const mid = rect.top + rect.height/2;
+        if(y < mid){
+          container.insertBefore(draggedEl, row);
+          return;
+        }
+      }
+      container.appendChild(draggedEl);
+    }
+    function onUp(ev){
+      handle.releasePointerCapture(pointerId);
+      draggedEl.classList.remove('dragging');
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      dragActive = false;
+      // finalize order from DOM
+      const orderedIds = [...container.querySelectorAll('.player-row')].map(r=>r.dataset.id);
+      orderedIds.forEach((id,i)=>{
+        const p = state.players.find(pp=>pp.id===id);
+        if(p) p.rank = i+1;
+      });
+      renderAll();
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ---------- draft tab ----------
+function renderDraftTab(){
+  renderTurnBanner();
+  renderRecommendations();
+  renderRosterGrid();
+  renderAvailableList();
+  renderDraftedLog();
+  persistState();
+}
+
+function renderTurnBanner(){
+  const el = document.getElementById('turn-banner');
+  const t = computeTurn();
+  el.classList.toggle('off', !t.isMyTurn);
+  const sub = t.isMyTurn ? "It's your pick — check the recommendations below." :
+    (t.picksUntilMe!=null ? `${t.picksUntilMe} pick${t.picksUntilMe===1?'':'s'} until your turn.` : '');
+  el.innerHTML = `<div class="big">${t.isMyTurn ? "🟢 YOUR TURN" : "Pick "+t.pickNum} · Round ${t.round}</div>
+    <div class="sub">${sub}</div>
+    <div class="row" style="margin-top:10px;justify-content:center;">
+      <button class="btn small ${alertsEnabled?'':'primary'}" id="enable-alerts-btn">${alertsEnabled?'Alerts on ✓':'Enable draft alerts'}</button>
+    </div>
+    ${alertsEnabled ? '' : '<div class="helptext" style="text-align:center;margin-top:6px;">Sound + vibration + notification when you\'re on the clock. On iPhone, vibration is unsupported by Safari and notifications may be limited outside a home-screen app — the sound and flashing tab title still work there.</div>'}
+    <details style="margin-top:8px;text-align:left;">
+      <summary style="font-size:12px;text-align:center;">Pick count looks wrong? Fix it</summary>
+      <div class="row" style="margin-top:8px;gap:6px;">
+        <input type="number" id="pick-correct-input" min="1" placeholder="Actual overall pick #" style="flex:1;">
+        <button class="btn small" id="pick-correct-btn">Set</button>
+      </div>
+      <div class="helptext" style="margin-top:6px;">If you ever miss logging someone else's pick (or double-log one), enter the real overall pick number your league is actually on and tap Set — everything below recalculates from that.</div>
+    </details>`;
+
+  document.getElementById('enable-alerts-btn').addEventListener('click', enableDraftAlerts);
+  document.getElementById('pick-correct-btn').addEventListener('click', applyPickCorrection);
+
+  // fire alerts on turn transitions, not on every re-render
+  if(t.isMyTurn){
+    if(lastMyTurnAlertPick !== t.pickNum){
+      lastMyTurnAlertPick = t.pickNum;
+      fireTurnAlert('yourturn', t);
+    }
+  } else {
+    lastMyTurnAlertPick = null;
+    stopTitleFlash();
+    if(t.picksUntilMe === 2 && lastWarnAlertPick !== t.pickNum){
+      lastWarnAlertPick = t.pickNum;
+      fireTurnAlert('warn', t);
+    }
+  }
+}
+
+function renderRecommendations(){
+  const el = document.getElementById('rec-list');
+  const recs = computeRecommendations();
+  if(recs.length===0){
+    el.innerHTML = '<div class="empty">No available players left on your board — add more in the Rankings tab.</div>';
+    return;
+  }
+  el.innerHTML = recs.map(r=>{
+    const p = r.player;
+    return `<div class="rec-card">
+      <div class="rec-top">
+        <div><span class="rec-rank">#${r.rank} PICK</span><br>
+          <b>${escapeHtml(p.name)}</b> ${posBadge(p.pos)} <span style="color:var(--text-dim);font-size:12px;">${p.team} · board rank ${p.rank}</span>
+        </div>
+      </div>
+      <div class="rec-why">${r.why}</div>
+      <div class="rec-btns">
+        <button class="btn primary small" data-mine="${p.id}">Draft to my team</button>
+        <button class="btn ghost small" data-other="${p.id}" style="border:1px solid var(--border);">Someone else took it</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('[data-mine]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.mine,'mine')));
+  el.querySelectorAll('[data-other]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.other,'other')));
+}
+
+function renderRosterGrid(){
+  const grid = document.getElementById('roster-grid');
+  const slots = buildRosterSlotList();
+  const needs = computeNeeds();
+  document.getElementById('roster-count').textContent = `${needs.myCount} drafted · ${needs.benchRemaining} bench open`;
+  grid.innerHTML = slots.map(s=>{
+    return `<div class="slot ${s.player?'filled':''}">
+      <div class="lbl">${s.label}</div>
+      <div class="val">${s.player ? escapeHtml(s.player.name) : '— open —'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAvailableList(){
+  const q = document.getElementById('draft-search').value.trim().toLowerCase();
+  let list = available();
+  if(draftFilter!=='ALL') list = list.filter(p=>p.pos===draftFilter);
+  if(q) list = list.filter(p=> p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q));
+  const container = document.getElementById('available-list');
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">No available players match.</div>';
+    return;
+  }
+  container.innerHTML = list.slice(0,300).map(p=>{
+    const row = `<div class="player-row" data-id="${p.id}">
+      <span class="rank-num">${p.rank}</span>
+      <span class="p-name">
+        <span class="nm">${injuryBadgeHtml(p)}${escapeHtml(p.name)}</span>
+        <span class="tm">${posBadge(p.pos)}${tierBadgeHtml(p)} ${p.team}</span>
+      </span>
+      <button class="expand-btn" data-expand="${p.id}" title="ADP / projections / status">${expandedIds.has(p.id)?'▾':'▸'}</button>
+      <div class="actionbtns">
+        <button class="btn primary small" data-mine="${p.id}">Mine</button>
+        <button class="btn ghost small" data-other="${p.id}" style="border:1px solid var(--border);">Other</button>
+      </div>
+    </div>`;
+    return row + (expandedIds.has(p.id) ? renderDetailPanel(p) : '');
+  }).join('');
+  container.querySelectorAll('[data-expand]').forEach(btn=>{
+    btn.addEventListener('click', ()=> toggleExpand(btn.dataset.expand, renderAvailableList));
+  });
+  wireDetailPanel(container);
+  container.querySelectorAll('[data-mine]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.mine,'mine')));
+  container.querySelectorAll('[data-other]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.other,'other')));
+}
+
+function renderDraftedLog(){
+  const list = drafted().sort((a,b)=> b.rank - a.rank).reverse(); // just show in draft order roughly by rank asc is fine
+  const container = document.getElementById('drafted-list');
+  document.getElementById('drafted-summary').textContent = `Draft log (${list.length} picks)`;
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">No picks yet.</div>';
+    return;
+  }
+  container.innerHTML = list.map(p=>{
+    const tag = p.status==='mine' ? '<span class="mine-tag">MINE</span>' : '<span class="other-tag">OTHER</span>';
+    return `<div class="player-row" data-id="${p.id}">
+      <span class="rank-num">${p.rank}</span>
+      <span class="p-name"><span class="nm">${escapeHtml(p.name)} ${tag}</span><span class="tm">${posBadge(p.pos)} ${p.team}</span></span>
+      <button class="btn ghost small" data-undo="${p.id}" style="border:1px solid var(--border);">Undo</button>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('[data-undo]').forEach(b=> b.addEventListener('click', ()=> setStatus(b.dataset.undo,'available',true)));
+}
+
+let toastHideTimer = null;
+function showActionToast(player, status){
+  const el = document.getElementById('action-toast');
+  if(!el) return;
+  const label = status === 'mine' ? 'MINE' : 'OTHER';
+  el.innerHTML = `<span class="msg">${escapeHtml(player.name)} → <b>${label}</b></span>
+    <button class="btn small primary" id="toast-undo-btn">Undo</button>`;
+  el.classList.remove('hidden');
+  document.getElementById('toast-undo-btn').addEventListener('click', undoLastAction);
+  if(toastHideTimer) clearTimeout(toastHideTimer);
+  toastHideTimer = setTimeout(()=> el.classList.add('hidden'), 7000);
+}
+function hideActionToast(){
+  const el = document.getElementById('action-toast');
+  if(el) el.classList.add('hidden');
+  if(toastHideTimer){ clearTimeout(toastHideTimer); toastHideTimer = null; }
+}
+function undoLastAction(){
+  const last = state.history.pop();
+  hideActionToast();
+  if(!last) return;
+  const p = state.players.find(pp=>pp.id===last.id);
+  if(p) p.status = last.prevStatus;
+  renderDraftTab();
+}
+
+function setStatus(id, status, isUndo){
+  const p = state.players.find(pp=>pp.id===id);
+  if(!p) return;
+  if(!isUndo){
+    state.history.push({id, prevStatus: p.status});
+    p.status = status;
+    renderDraftTab();
+    showActionToast(p, status);
+  } else {
+    p.status = status;
+    // drop any history entries for this id so the undo toast never later
+    // reapplies a prevStatus for a pick that was already manually reverted
+    state.history = state.history.filter(h => h.id !== id);
+    hideActionToast();
+    renderDraftTab();
+  }
+}
+
+// ---------- settings ----------
+function renderSettingsForm(){
+  const s = state.settings;
+  document.getElementById('s-teams').value = s.teams;
+  document.getElementById('s-slot').value = s.slot;
+  document.getElementById('s-bench').value = s.bench;
+  document.getElementById('s-qb').value = s.QB;
+  document.getElementById('s-rb').value = s.RB;
+  document.getElementById('s-wr').value = s.WR;
+  document.getElementById('s-te').value = s.TE;
+  document.getElementById('s-flex').value = s.FLEX;
+  document.getElementById('s-dst').value = s.DST;
+  document.getElementById('s-k').value = s.K;
+  document.getElementById('s-scoring').value = s.scoring;
+
+  const sc = loadSyncConfig();
+  const ownerEl = document.getElementById('sync-owner');
+  const repoEl = document.getElementById('sync-repo');
+  const tokenEl = document.getElementById('sync-token');
+  if(ownerEl && !ownerEl.value && sc) ownerEl.value = sc.owner || '';
+  if(repoEl && !repoEl.value && sc) repoEl.value = sc.repo || '';
+  if(tokenEl) tokenEl.placeholder = sc && sc.token ? 'Token saved (leave blank to keep it)' : 'github_pat_...';
+  if(document.getElementById('sync-status') && document.getElementById('sync-status').textContent === 'Not connected.' && sc){
+    setSyncStatus(syncStatus.state, syncStatus.message);
+  }
+}
+
+function saveSettingsFromForm(){
+  state.settings = {
+    teams: parseInt(document.getElementById('s-teams').value)||12,
+    slot: parseInt(document.getElementById('s-slot').value)||1,
+    bench: parseInt(document.getElementById('s-bench').value)||0,
+    QB: parseInt(document.getElementById('s-qb').value)||0,
+    RB: parseInt(document.getElementById('s-rb').value)||0,
+    WR: parseInt(document.getElementById('s-wr').value)||0,
+    TE: parseInt(document.getElementById('s-te').value)||0,
+    FLEX: parseInt(document.getElementById('s-flex').value)||0,
+    DST: parseInt(document.getElementById('s-dst').value)||0,
+    K: parseInt(document.getElementById('s-k').value)||0,
+    scoring: document.getElementById('s-scoring').value || 'Half-PPR'
+  };
+  renderAll();
+}
+
+// ---------- export / import ----------
+function downloadStateSnapshot(tag){
+  try{
+    const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `draft-progress-${tag}-` + new Date().toISOString().slice(0,19).replace(/[:T]/g,'-') + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(e){ /* best effort — never block the action this backs up */ }
+}
+function exportState(){
+  downloadStateSnapshot('manual');
+}
+
+function importStateFromFile(file){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(parsed && parsed.players && parsed.settings){
+        state = parsed;
+        if(!state.history) state.history = [];
+        renderAll();
+        alert('Progress imported.');
+      } else {
+        alert('This file does not look like a valid export.');
+      }
+    }catch(err){
+      alert('Could not read that file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ---------- wiring ----------
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-'+tab.dataset.tab).classList.add('active');
+  });
+});
+
+document.getElementById('rank-search').addEventListener('input', renderRankingsList);
+document.getElementById('draft-search').addEventListener('input', renderAvailableList);
+
+document.getElementById('add-player-btn').addEventListener('click', ()=>{
+  const name = document.getElementById('add-name').value.trim();
+  const pos = document.getElementById('add-pos').value;
+  const team = document.getElementById('add-team').value.trim().toUpperCase() || '--';
+  if(!name){ alert('Enter a player name.'); return; }
+  const newRank = state.players.length + 1;
+  state.players.push({id:'p'+Date.now(), rank:newRank, name, pos, team, status:'available'});
+  document.getElementById('add-name').value='';
+  document.getElementById('add-team').value='';
+  renderAll();
+});
+
+document.getElementById('save-settings').addEventListener('click', saveSettingsFromForm);
+document.getElementById('export-btn').addEventListener('click', exportState);
+document.getElementById('import-file').addEventListener('change', (e)=>{
+  if(e.target.files && e.target.files[0]) importStateFromFile(e.target.files[0]);
+});
+document.getElementById('reset-draft-btn').addEventListener('click', ()=>{
+  if(confirm('Clear all draft picks (mine + others) but keep your custom rankings? A backup of your current progress downloads first, just in case.')){
+    downloadStateSnapshot('before-reset-draft');
+    state.players.forEach(p=> p.status='available');
+    state.history = [];
+    state.pickOffset = 0;
+    renderAll();
+  }
+});
+document.getElementById('reset-all-btn').addEventListener('click', ()=>{
+  if(confirm('Reset EVERYTHING back to the original seed rankings and settings? A backup of your current progress downloads first. This cannot be undone in-app afterward.')){
+    downloadStateSnapshot('before-reset-all');
+    state.players = freshPlayers();
+    state.settings = {...DEFAULT_SETTINGS};
+    state.history = [];
+    state.pickOffset = 0;
+    renderAll();
+  }
+});
+
+document.getElementById('sync-connect-btn').addEventListener('click', handleConnectSync);
+document.getElementById('sync-now-btn').addEventListener('click', handleSyncNow);
+document.getElementById('sync-disconnect-btn').addEventListener('click', handleDisconnectSync);
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    stopTitleFlash();
+    if(syncConfig) trySyncOnLoad();
+  }
+});
+
+init();
+})();
+</script>
+</body>
+</html>
